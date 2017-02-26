@@ -2,6 +2,7 @@ package com.cs39440.rob41.sudokuapp;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -57,7 +58,7 @@ public class MainMenuActivity extends AppCompatActivity {
             // Delayed display of UI elements
             ActionBar actionBar = getSupportActionBar();
             if (actionBar != null) {
-                actionBar.show();
+                //actionBar.show();
             }
             mControlsView.setVisibility(View.VISIBLE);
         }
@@ -116,7 +117,7 @@ public class MainMenuActivity extends AppCompatActivity {
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls
         // are available.
-        delayedHide(100);
+        delayedHide(300);
     }
 
     private void toggle() {
@@ -162,7 +163,11 @@ public class MainMenuActivity extends AppCompatActivity {
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
-    //My Code
+
+
+    /*
+    *My Code - this will handle the actions to follow once buttons have been clicked
+    */
 
     public void openCamera(View View){
         //Intent intent = new Intent(this, camera.class);
@@ -170,15 +175,21 @@ public class MainMenuActivity extends AppCompatActivity {
     }
 
     public void createSudoku(View View){
-        //Intent intent = new Intent(this, createSudoku.class);
-        //startActivity (intent);
+        Intent intent = new Intent(this, CreateSudokuActivity.class);
+        startActivity (intent);
     }
     public void openInformation(View View){
         //Intent intent = new Intent(this, information.class);
         //startActivity (intent);
     }
     public void exit(View View){
-        System.exit(0); //Bad implemention (no clean up) will need updating
+        //if the API version is 21 or greater
+        if (Build.VERSION.SDK_INT >= 21){
+            finishAndRemoveTask();
+        // If the API version is lower than 21
+        }else{
+            this.finishAffinity();
+        }
     }
 
 

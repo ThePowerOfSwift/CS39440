@@ -2,8 +2,7 @@
     <string name="app_name">Sudoku App</string>
 
     <string name="camera_button">Capture Sudoku</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="exit_button">Quit</string>
-    <string name="createSudoku_button">Create Sudoku</string>
-    <string name="information_button">Information</string>
+    <string name="exit_label">Quit</string>
+    <string name="createSudoku_label">Create Sudoku</string>
+    <string name="information_label">Information</string>
 </resources>

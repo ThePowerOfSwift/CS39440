@@ -44,7 +44,7 @@
             <Button
                 android:id="@+id/createSudoku_button"
                 android:background="@drawable/buttonshape"
-                android:text="@string/createSudoku_button"
+                android:text="@string/createSudoku_label"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
@@ -54,7 +54,7 @@
             <Button
                 android:id="@+id/information_button"
                 android:background="@drawable/buttonshape"
-                android:text="@string/information_button"
+                android:text="@string/information_label"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
@@ -64,14 +64,12 @@
             <Button
                 android:id="@+id/exit_button"
                 android:background="@drawable/buttonshape"
-                android:text="@string/exit_button"
+                android:text="@string/exit_label"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
                 android:textSize="20sp"
                 android:onClick="exit"/>
-
-
 
         </LinearLayout>
     </FrameLayout>
