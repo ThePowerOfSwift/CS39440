@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Sudoku App</string>
 
-    <string name="dummy_button">Dummy Button</string>
+    <string name="camera_button">Capture Sudoku</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="exit_button">Quit</string>
+    <string name="createSudoku_button">Create Sudoku</string>
+    <string name="information_button">Information</string>
 </resources>

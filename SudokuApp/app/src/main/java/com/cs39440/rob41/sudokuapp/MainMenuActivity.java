@@ -1,6 +1,7 @@
 package com.cs39440.rob41.sudokuapp;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -105,7 +106,7 @@ public class MainMenuActivity extends AppCompatActivity {
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
-        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        findViewById(R.id.camera_button).setOnTouchListener(mDelayHideTouchListener);
     }
 
     @Override
@@ -160,4 +161,25 @@ public class MainMenuActivity extends AppCompatActivity {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
+
+    //My Code
+
+    public void openCamera(View View){
+        //Intent intent = new Intent(this, camera.class);
+        //startActivity (intent);
+    }
+
+    public void createSudoku(View View){
+        //Intent intent = new Intent(this, createSudoku.class);
+        //startActivity (intent);
+    }
+    public void openInformation(View View){
+        //Intent intent = new Intent(this, information.class);
+        //startActivity (intent);
+    }
+    public void exit(View View){
+        System.exit(0); //Bad implemention (no clean up) will need updating
+    }
+
+
 }

@@ -12,12 +12,7 @@
         android:id="@+id/fullscreen_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:keepScreenOn="true"
-        android:text="@string/dummy_content"
-        android:textColor="#33b5e5"
-        android:textSize="50sp"
-        android:textStyle="bold" />
+        android:gravity="center" />
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
@@ -28,21 +23,55 @@
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
-            style="?metaButtonBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:background="@color/black_overlay"
-            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="top|center_horizontal"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingTop="20dp"
             tools:ignore="UselessParent">
 
             <Button
-                android:id="@+id/dummy_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/dummy_button" />
+                android:id="@+id/camera_button"
+                android:background="@drawable/buttonshape"
+                android:text="@string/camera_button"
+                android:layout_width="260dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:textSize="20sp"
+                android:onClick="openCamera"/>
+
+            <Button
+                android:id="@+id/createSudoku_button"
+                android:background="@drawable/buttonshape"
+                android:text="@string/createSudoku_button"
+                android:layout_width="260dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:textSize="20sp"
+                android:onClick="createSudoku"/>
+
+            <Button
+                android:id="@+id/information_button"
+                android:background="@drawable/buttonshape"
+                android:text="@string/information_button"
+                android:layout_width="260dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:textSize="20sp"
+                android:onClick="openInformation"/>
+
+            <Button
+                android:id="@+id/exit_button"
+                android:background="@drawable/buttonshape"
+                android:text="@string/exit_button"
+                android:layout_width="260dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:textSize="20sp"
+                android:onClick="exit"/>
+
+
 
         </LinearLayout>
     </FrameLayout>
