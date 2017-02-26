@@ -5,4 +5,5 @@
     <string name="exit_label">Quit</string>
     <string name="createSudoku_label">Create Sudoku</string>
     <string name="information_label">Information</string>
+    <string name="playSudoku_label">Play Sudoku!</string>
 </resources>

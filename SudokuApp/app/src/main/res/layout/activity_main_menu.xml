@@ -1,8 +1,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
     tools:context="com.cs39440.rob41.sudokuapp.MainMenuActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -28,48 +28,59 @@
             android:layout_gravity="top|center_horizontal"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingTop="20dp"
             tools:ignore="UselessParent">
+
+            <TextView
+                android:id="@+id/textView"
+                android:text="@string/app_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="50sp"
+                android:textStyle="bold"
+                android:gravity="top|center"
+                android:paddingTop="30dp"
+                android:paddingBottom="30dp" />
 
             <Button
                 android:id="@+id/camera_button"
-                android:background="@drawable/buttonshape"
                 android:text="@string/camera_button"
+                android:onClick="openCamera"
+                android:background="@drawable/buttonshape"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
-                android:textSize="20sp"
-                android:onClick="openCamera"/>
+                android:textSize="20sp"/>
 
             <Button
                 android:id="@+id/createSudoku_button"
-                android:background="@drawable/buttonshape"
                 android:text="@string/createSudoku_label"
+                android:onClick="createSudoku"
+                android:background="@drawable/buttonshape"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
-                android:textSize="20sp"
-                android:onClick="createSudoku"/>
+                android:textSize="20sp"/>
 
             <Button
                 android:id="@+id/information_button"
-                android:background="@drawable/buttonshape"
                 android:text="@string/information_label"
+                android:onClick="openInformation"
+                android:background="@drawable/buttonshape"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
-                android:textSize="20sp"
-                android:onClick="openInformation"/>
+                android:textSize="20sp"/>
 
             <Button
                 android:id="@+id/exit_button"
-                android:background="@drawable/buttonshape"
                 android:text="@string/exit_label"
+                android:background="@drawable/buttonshape"
+                android:onClick="exit"
                 android:layout_width="260dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
-                android:textSize="20sp"
-                android:onClick="exit"/>
+                android:textSize="20sp"/>
 
         </LinearLayout>
     </FrameLayout>
