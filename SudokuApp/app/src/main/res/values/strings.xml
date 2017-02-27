@@ -6,4 +6,13 @@
     <string name="createSudoku_label">Create Sudoku</string>
     <string name="information_label">Information</string>
     <string name="playSudoku_label">Play Sudoku!</string>
+    <string name="creator">Robert Bayliss</string>
+    <string name="purpose">This App is designed to create Sudokus, capture images of Sudokus, then
+        using optical character recognition, allow them to be completed in the App. Additionally it
+        will identify solutions on these so that uses can check their accuracy.
+        \nThis Application was created as part of my Major project for university. As such, it
+        needed to demonstrate my ability to develop software and write efficient code, all whist
+        following a software development methodology to achieve the stated goal.</string>
+    <string name="credits">OpenCV?</string>
+    <string name="back_label">Back</string>
 </resources>

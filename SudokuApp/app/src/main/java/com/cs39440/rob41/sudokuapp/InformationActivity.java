@@ -3,6 +3,7 @@ package com.cs39440.rob41.sudokuapp;
 import android.app.Activity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 
 public class InformationActivity extends Activity {
 
@@ -10,5 +11,9 @@ public class InformationActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_information);
+    }
+
+    public void closeActivity(View view) {
+        finish();
     }
 }

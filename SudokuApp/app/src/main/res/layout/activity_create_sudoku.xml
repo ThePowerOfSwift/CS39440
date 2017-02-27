@@ -12,10 +12,29 @@
     tools:context="com.cs39440.rob41.sudokuapp.CreateSudokuActivity">
 
     <TextView
-        android:id="@+id/sudokuPlayPage_label"
+        android:id="@+id/sudokuPlayPage_title"
         android:text="@string/playSudoku_label"
         android:textSize="30sp"
+        android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="top|center" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/play_back_button"
+            android:text="@string/back_label"
+            android:onClick="closeActivity"
+            android:background="@drawable/buttonshape"
+            android:layout_width="260dp"
+            android:layout_height="50dp"
+            android:textSize="20sp"
+            android:textAlignment="center"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true" />
+    </RelativeLayout>
+
 </LinearLayout>
