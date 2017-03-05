@@ -18,7 +18,18 @@
         android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="top|center" />
+        android:gravity="top|center"
+        android:paddingBottom="5dp" />
+
+    <GridLayout
+        android:id="@+id/sudokuGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:background="@drawable/grid"
+        android:rowCount="9"
+        android:columnCount="9">
+    </GridLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -35,6 +46,7 @@
             android:textAlignment="center"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true" />
+
     </RelativeLayout>
 
 </LinearLayout>
