@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 
 
@@ -26,8 +27,20 @@ public class MainMenuActivity extends Activity {
     */
 
     public void openCamera(View View){
-        //Intent intent = new Intent(this, camera.class);
-        //startActivity (intent);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(intent, 1);
+        }
+    }
+
+    //code to run once a picture has been taken
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //If the user took a picture direct to OCR element otherwise fall through to main menu
+        if(resultCode == RESULT_OK) {
+            Intent sudokuIntent = new Intent(this, CreateSudokuActivity.class);
+            startActivity(sudokuIntent);
+        }
     }
 
     public void createSudoku(View View){

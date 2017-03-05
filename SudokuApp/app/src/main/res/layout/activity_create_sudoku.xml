@@ -20,6 +20,14 @@
         android:layout_height="wrap_content"
         android:gravity="top|center" />
 
+    <GridView
+        android:id="@+id/sudokuGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:numColumns="9">
+    </GridView>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
