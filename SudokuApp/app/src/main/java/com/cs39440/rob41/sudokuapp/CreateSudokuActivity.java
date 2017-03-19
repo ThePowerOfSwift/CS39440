@@ -3,6 +3,7 @@ package com.cs39440.rob41.sudokuapp;
 import android.app.Activity;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -10,11 +11,14 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CreateSudokuActivity extends Activity {
-    //GridView gridView;
     GridLayout gridLayout;
     boolean drawNums = true;
     int [][] gameData = new int [9][9];
+    List<TextView> textCells = new ArrayList<TextView>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,20 +33,6 @@ public class CreateSudokuActivity extends Activity {
                 count++;
             }
         }
-
-
-
-//        gridView = (GridView)findViewById(R.id.sudokuGrid);
-//        gridView.setAdapter(new SudokuGrid(this,basic));
-//
-//        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                Toast.makeText(getApplicationContext(),
-//                        ((TextView) view.findViewById(R.id.cellText)
-//                        ).getText(), Toast.LENGTH_SHORT).show();
-//            }
-//        });
     }
 
     @Override
@@ -65,10 +55,23 @@ public class CreateSudokuActivity extends Activity {
         for(int yPos=0; yPos<numOfRow; yPos++){
             for(int xPos=0; xPos<numOfCol; xPos++){
 
+                //int setValue = GameBoard.getInstance().getCell(xPos,yPos).getSet();
+                int gridValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
+
                 TextView cellText = new TextView(this);
+                textCells.add(cellText);
+
+                String cellId = String.valueOf(yPos)+String.valueOf(xPos);
+                Log.d("cellValue",String.valueOf(Integer.parseInt(cellId)));
+                cellText.setId(Integer.parseInt(cellId));
+
                 cellText.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
                 cellText.setTypeface(null,Typeface.BOLD);
-                cellText.setText(String.valueOf(gameData[xPos][yPos]));
+                if (gridValue != 0) {
+                    cellText.setText(String.valueOf(gridValue));
+                }else{
+                    cellText.setText(String.valueOf(" "));
+                }
                 cellText.setBackgroundColor(0x07000000);
                 cellText.setWidth(cellsize);
                 cellText.setHeight(cellsize);
@@ -94,5 +97,17 @@ public class CreateSudokuActivity extends Activity {
         finish();
     }
 
+    public void SolveSudoku(View view) {
+        GameBoard.getInstance().solve();
+        displaySolution();
+    }
+
+    public void displaySolution(){
+        for(int i=0; i < textCells.size(); i++){
+            textCells.get(i).getId();
+            Log.d("cellValue",String.valueOf(textCells.get(i).getId()));
+            //string[i] = allEds.get(i).getText().toString();
+        }
+    }
 
 }

@@ -38,14 +38,18 @@ public class MainMenuActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //If the user took a picture direct to OCR element otherwise fall through to main menu
         if(resultCode == RESULT_OK) {
-            Intent sudokuIntent = new Intent(this, CreateSudokuActivity.class);
-            startActivity(sudokuIntent);
+            Intent loadingIntent = new Intent(this, LoadingActivity.class);
+            loadingIntent.putExtra("fromImage",true);
+            //Bundle extras = data.getExtras();
+            //Bitmap imageBitmap = (Bitmap) extras.get("data");
+            //mImageView.setImageBitmap(imageBitmap);
+            startActivity(loadingIntent);
         }
     }
 
     public void createSudoku(View View){
-        Intent intent = new Intent(this, CreateSudokuActivity.class);
-        startActivity (intent);
+        Intent loadingIntent = new Intent(this, LoadingActivity.class);
+        startActivity (loadingIntent);
     }
 
     public void openInformation(View View){

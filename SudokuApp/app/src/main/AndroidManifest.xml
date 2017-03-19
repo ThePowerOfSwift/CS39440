@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cs39440.rob41.sudokuapp">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,9 +24,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".CreateSudokuActivity" />
-        <activity android:name=".InformationActivity"></activity>
+        <activity android:name=".InformationActivity" />
+        <activity android:name=".LoadingActivity"></activity>
     </application>
-    <uses-feature android:name="android.hardware.camera"
-        android:required="true" />
 
 </manifest>

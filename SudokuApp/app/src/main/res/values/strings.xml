@@ -15,4 +15,6 @@
         following a software development methodology to achieve the stated goal.</string>
     <string name="credits">OpenCV?</string>
     <string name="back_label">Back</string>
+    <string name="loadingSudoku_label">Creating Sudoku</string>
+    <string name="solve_label">Solve</string>
 </resources>
