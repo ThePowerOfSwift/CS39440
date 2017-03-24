@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_create_sudoku"
     android:layout_width="match_parent"
@@ -11,59 +11,60 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.cs39440.rob41.sudokuapp.CreateSudokuActivity">
 
-    <TextView
-        android:id="@+id/sudokuPlay_title"
-        android:text="@string/playSudoku_label"
-        android:textSize="30sp"
-        android:textStyle="bold"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="top|center"
-        android:paddingBottom="5dp" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <GridLayout
-        android:id="@+id/sudokuGrid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:background="@drawable/grid"
-        android:rowCount="9"
-        android:columnCount="9">
-    </GridLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-            android:orientation="horizontal"
+        <TextView
+            android:id="@+id/sudokuPlay_title"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true">
+            android:layout_height="wrap_content"
+            android:gravity="top|center"
+            android:paddingBottom="5dp"
+            android:text="@string/playSudoku_label"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/play_back_button"
-                android:text="@string/back_label"
-                android:onClick="closeActivity"
-                android:background="@drawable/buttonshape"
-                android:layout_width="260dp"
-                android:layout_height="50dp"
-                android:textSize="20sp"
-                android:textAlignment="center"
-                android:layout_weight="1" />
-            <Button
-                android:id="@+id/play_solve_button"
-                android:text="@string/solve_label"
-                android:onClick="SolveSudoku"
-                android:background="@drawable/buttonshape"
-                android:layout_width="260dp"
-                android:layout_height="50dp"
-                android:textSize="20sp"
-                android:textAlignment="center"
-                android:layout_weight="1" />
-        </LinearLayout>
+        <GridLayout
+            android:id="@+id/sudokuGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/grid"
+            android:columnCount="9"
+            android:layout_gravity="center"
+            android:rowCount="9">
+        </GridLayout>
+    </LinearLayout>
 
-    </RelativeLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal">
 
-</LinearLayout>
+        <Button
+            android:id="@+id/play_back_button"
+            android:layout_width="260dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/buttonshape"
+            android:onClick="closeActivity"
+            android:text="@string/back_label"
+            android:textAlignment="center"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/play_solve_button"
+            android:layout_width="260dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/buttonshape"
+            android:onClick="SolveSudoku"
+            android:text="@string/solve_label"
+            android:textAlignment="center"
+            android:textSize="20sp" />
+    </LinearLayout>
+
+</RelativeLayout>

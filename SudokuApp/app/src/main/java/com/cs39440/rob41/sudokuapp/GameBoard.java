@@ -135,7 +135,7 @@ public class GameBoard {
         Log.d("set","EXITcheckSets");
     }
 
-    //using the TopLeft point of each set recursively check the that set then move on
+    //using the TopLeft point of each set recursively check that set then move on
     private void createOverlayOfSets(int startX, int startY, int add, int max) {
         int pointInSetNum = 0;
 
@@ -171,6 +171,8 @@ public class GameBoard {
                 }else if ( gameBoard[x][y].getPossValues().size() == 1){
                     //Set the Answer value to the remaining value in the arraylist
                     gameBoard[x][y].setAnswerValue(gameBoard[x][y].getPossValues().get(0));
+
+                    //THIS LINE NEEDS TO BE REMOVED AND "startValue" is cell should be final
                     gameBoard[x][y].setStartValue(gameBoard[x][y].getPossValues().get(0));
                 }
             }
