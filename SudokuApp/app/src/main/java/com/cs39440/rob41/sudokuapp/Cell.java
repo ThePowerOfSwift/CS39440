@@ -11,31 +11,34 @@ import java.util.TreeSet;
  */
 
 public class Cell {
-    private int set;
+    private int region;
     private int startValue;
     private ArrayList <Integer> possValues = new ArrayList<>();
     private int answerValue;
     private int userAssignedValue;
 
-    public Cell(int passSet, int passStartValue){
+    public Cell(int passRegion, int passStartValue){
         // TODO Auto-generated constructor stub
-        set = passSet;
+        region = passRegion;
         startValue = passStartValue;
         userAssignedValue = 0;
         //populate the inital list with all values
         if (passStartValue == 0){
             for (int counter = 1; counter < 10; counter++) {
                 possValues.add(counter);
+                answerValue = 0;
             }
+        }else if(passStartValue >= 1 && passStartValue <=9 ){
+            answerValue = passStartValue;
         }
     }
 
-    public int getSet() {
-        return set;
+    public int getRegion() {
+        return region;
     }
 
-    public void setSet(int set) {
-        this.set = set;
+    public void setRegion(int region) {
+        this.region = region;
     }
 
     public ArrayList<Integer> getPossValues() {
@@ -78,6 +81,6 @@ public class Cell {
                 }
             }
         }
-        Log.d("possValues:",possValues.toString()+" SET:" + set +" ExValues"+excludedValues.toString());
+        Log.d("possValues:",possValues.toString()+" SET:" + region +" ExValues"+excludedValues.toString());
     }
 }

@@ -23,8 +23,8 @@ public class GameBoard {
         Log.d("board","CREATING GAME BOARD SINGLETON");
         int set = 0;
         //SAMPLE SUDOKU
-        int [] sudoku =
-                {8,0,0,5,0,0,3,2,0,
+        int [] sudoku ={
+                8,0,0,5,0,0,3,2,0,
                 7,0,3,1,0,0,4,0,0,
                 1,2,0,0,0,9,0,0,8,
                 6,5,0,0,9,3,0,8,0,
@@ -40,7 +40,7 @@ public class GameBoard {
                 gameBoard[x][y] = new Cell(set,sudoku[tracker]);
                 tracker++;
                 
-                Log.d("boardfor","loop: "+x+"; set: "+set);
+                //Log.d("boardfor","loop: "+x+"; set: "+set);
                 if (x == 2 || x == 5){
                     set++;
                 }
@@ -68,10 +68,10 @@ public class GameBoard {
             loopcounter++;
             if (loopcounter == 10){
                 solutionFound = true;
-                Log.d("solve","Exit - 10 loops");
+                Log.d("Not Solved","Exit - 10 loops");
             }
         }
-        Log.d("solve","EXITING SOLVE");
+        Log.d("solved in:",loopcounter+" EXITING SOLVE");
     }
 
 
@@ -82,9 +82,7 @@ public class GameBoard {
         for (int column = 0; column < gridSize ; column++) {
             excludedValues.clear();
             for (int counter = 0; counter < gridSize; counter++) {
-                if (gameBoard[counter][column].getStartValue() != 0) {
-                    excludedValues.add(gameBoard[counter][column].getStartValue());
-                }
+                excludedValues.add(updateExcludedValues(counter,column));
             }
             for (int counter = 0; counter < gridSize; counter++) {
                 if (gameBoard[counter][column].getStartValue() == 0) {
@@ -94,15 +92,21 @@ public class GameBoard {
         }
     }
 
+    private int updateExcludedValues(int row, int column){
+        if (gameBoard[row][column].getAnswerValue() != 0) {
+            return gameBoard[row][column].getAnswerValue();
+        }
+        return 0;
+    }
+
+
     private void checkRow() {
         Log.d("row","checkRow");
         ArrayList<Integer> excludedValues = new ArrayList<>();
         for (int row = 0; row < gridSize ; row++) {
             excludedValues.clear();
             for (int counter = 0; counter < gridSize; counter++) {
-                if (gameBoard[row][counter].getStartValue() != 0) {
-                    excludedValues.add(gameBoard[row][counter].getStartValue());
-                }
+                excludedValues.add(updateExcludedValues(row,counter));
             }
             for (int counter = 0; counter < gridSize; counter++) {
                 if (gameBoard[row][counter].getStartValue() == 0) {
@@ -119,9 +123,7 @@ public class GameBoard {
             for (int pntCounter = 0; pntCounter < gridSize ; pntCounter++){
                 int x = OverlayOfSets[setCounter][pntCounter].getX();
                 int y = OverlayOfSets[setCounter][pntCounter].getY();
-                if (gameBoard[x][y].getStartValue() != 0){
-                    excludedValues.add(gameBoard[x][y].getStartValue());
-                }
+                excludedValues.add(updateExcludedValues(x,y));
             }
             for (int pntCounter = 0; pntCounter < gridSize ; pntCounter++){
                 int x = OverlayOfSets[setCounter][pntCounter].getX();
@@ -143,7 +145,7 @@ public class GameBoard {
             for (int x = startX; x <= (max+startX); x = x + add) {
                 //Check this specific set
                 if(add != 3){
-                    //Log.d("set",String.valueOf(gameBoard[x][y].getSet()));
+                    //Log.d("set",String.valueOf(gameBoard[x][y].getRegion()));
 
                     OverlayOfSets[setTracker][pointInSetNum] = new Points(x,y);
                     pointInSetNum++;
@@ -166,14 +168,14 @@ public class GameBoard {
         for(int y=0; y<gridSize; y++){
             for(int x=0; x<gridSize; x++) {
                 if( gameBoard[x][y].getPossValues().size() > 1){
-                    Log.d("Solving","Arraylist still has >1 values");
+                    Log.d("isSolved","Arraylist still has >1 values");
                     solutionFound = false;
                 }else if ( gameBoard[x][y].getPossValues().size() == 1){
                     //Set the Answer value to the remaining value in the arraylist
                     gameBoard[x][y].setAnswerValue(gameBoard[x][y].getPossValues().get(0));
 
                     //THIS LINE NEEDS TO BE REMOVED AND "startValue" is cell should be final
-                    gameBoard[x][y].setStartValue(gameBoard[x][y].getPossValues().get(0));
+                    //gameBoard[x][y].setStartValue(gameBoard[x][y].getPossValues().get(0));
                 }
             }
         }
