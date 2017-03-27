@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.util.Log;
@@ -32,6 +33,14 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_sudoku);
         gridLayout = (GridLayout)findViewById(R.id.sudokuGrid);
+
+        /*int count = 0;
+        for(int y=0; y<9; y++){
+            for(int x=0; x<9; x++){
+                gameData[x][y] = count;
+                count++;
+            }
+        }*/
     }
 
     @Override
@@ -91,6 +100,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
                 // ...so when clicked on it's highlighted
                 cellText.setOnFocusChangeListener(this);
                 // ...so when datas entered it's valided and passed to the gameboard
+
                 cellText.setOnClickListener(cellValueChanged);
 
                 cellLookUpTable.put(count,new Points(xPos,yPos));
@@ -140,7 +150,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
         oldFocus = v;
     }
 
-    //Returns a width of the grid image
+    //Returns the width of the grid image
     public int updateGridSize(){
         gridLayout = (GridLayout)findViewById(R.id.sudokuGrid);
         int gridWidth = gridLayout.getWidth();
@@ -159,11 +169,12 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
     }
 
     public void SolveSudoku(View view) {
-        GameBoard.getInstance().constraintSolve();
-        GameBoard.getInstance().backtrackingSolve(GameBoard.getInstance().findBestCell());
-
-
+        GameBoard.getInstance().solve();
         displaySolution();
+        //Colour to Green
+        //cellText.setTextColor(Color.parseColor("#105e07"));
+        //Colour to Red
+        //cellText.setTextColor(Color.parseColor("#8c1500"));
     }
 
     public void displaySolution(){
@@ -175,18 +186,14 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
             int userValue = GameBoard.getInstance().getCell(x, y).getUserAssignedValue();
             int cellId = getResources().getIdentifier(String.valueOf(count), "id", getPackageName());
             EditText cellText = (EditText)findViewById(cellId);
-            //REMOVE LATER
-            if (answerValue != 0){
-                cellText.setText(String.valueOf(answerValue));
-                if (answerValue == userValue){
-                    //Set Text green
-                    cellText.setTextColor(Color.parseColor("#105e07"));
-                }else if (answerValue != userValue && userValue != 0){
-                    //Set Text red
-                    cellText.setTextColor(Color.parseColor("#8c1500"));
-                }
-            }
 
+            //Log.d("celltextVal",String.valueOf(cellText.getText())+" ID:"+cellId);
+            cellText.setText(String.valueOf(answerValue));
+            if (answerValue == userValue){
+                cellText.setTextColor(Color.parseColor("#105e07"));
+            }else if (answerValue != userValue && userValue != 0){
+                cellText.setTextColor(Color.parseColor("#8c1500"));
+            }
         }
     }
 }
