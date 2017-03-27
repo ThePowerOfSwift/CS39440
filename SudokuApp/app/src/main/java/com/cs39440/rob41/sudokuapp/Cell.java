@@ -12,25 +12,38 @@ import java.util.TreeSet;
 
 public class Cell {
     private int region;
-    private int startValue;
-    private ArrayList <Integer> possValues = new ArrayList<>();
+    private final int startValue;
+    private final int x;
+    private final int y;
     private int answerValue;
     private int userAssignedValue;
+    private ArrayList <Integer> possValues = new ArrayList<>();
 
-    public Cell(int passRegion, int passStartValue){
+    public Cell(int passRegion, int passStartValue, int passX, int passY){
         // TODO Auto-generated constructor stub
         region = passRegion;
         startValue = passStartValue;
         userAssignedValue = 0;
+        x = passX;
+        y = passY;
         //populate the inital list with all values
         if (passStartValue == 0){
             for (int counter = 1; counter < 10; counter++) {
                 possValues.add(counter);
-                answerValue = 0;
             }
+            answerValue = 0;
         }else if(passStartValue >= 1 && passStartValue <=9 ){
             answerValue = passStartValue;
         }
+    }
+
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
     }
 
     public int getRegion() {
@@ -51,10 +64,6 @@ public class Cell {
 
     public int getStartValue() {
         return startValue;
-    }
-
-    public void setStartValue(int startValue) {
-        this.startValue = startValue;
     }
 
     public int getAnswerValue() {
