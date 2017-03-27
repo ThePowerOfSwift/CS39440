@@ -1,32 +1,29 @@
 package com.cs39440.rob41.sudokuapp;
 
-import android.graphics.Point;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 
 /**
  * Created by Prommy on 06/03/2017.
  */
 public class GameBoard {
-    private static GameBoard ourInstance = new GameBoard();
-    private int gridSize = 9;
-    private Cell [][] gameBoard = new Cell [gridSize][gridSize];
-    private Points [][] OverlayOfSets = new Points [gridSize][gridSize];
+    private static int gridSize;
+    private static Cell [][] gameCells;
+    private static Points [][] OverlayOfRegions;
     private int setTracker = 0;
 
-    public static GameBoard getInstance() {
-        return ourInstance;
+    public static Cell getCell(int x, int y){
+        return gameCells[x][y];
     }
 
-    public Cell getCell(int x, int y){
-        return gameBoard[x][y];
-    }
-
-    private GameBoard() {
-        Log.d("board","CREATING GAME BOARD SINGLETON");
-        int set = 0;
+    public GameBoard(int startingValues[], int passedGridSize) {
+        Log.d("board","CREATING GAME BOARD");
+        gridSize = passedGridSize;
+        gameCells = new Cell [gridSize][gridSize];
+        OverlayOfRegions = new Points [gridSize][gridSize];
+        int region = 0;
         //SAMPLE SUDOKU
         /*int [] sudoku ={
                 8,0,0,5,0,0,3,2,0,
@@ -37,7 +34,7 @@ public class GameBoard {
                 0,8,0,6,2,0,0,9,3,
                 2,0,0,4,0,0,0,6,7,
                 0,0,0,0,0,8,1,0,2,
-                0,7,4,0,0,6,0,0,5,0};*/
+                0,7,4,0,0,6,0,0,5,0};
         int [] sudoku ={
                 0,0,0,5,0,0,0,0,0,
                 0,0,0,1,0,0,0,0,0,
@@ -47,53 +44,57 @@ public class GameBoard {
                 0,0,0,0,0,0,0,0,0,
                 0,0,0,0,0,0,0,0,0,
                 0,0,0,0,0,0,0,0,0,
-                0,0,0,0,0,0,0,0,0};
+                0,0,0,0,0,0,0,0,0};*/
 
         int tracker = 0;
-
         for(int y=0; y<gridSize; y++){
             for(int x=0; x<gridSize; x++){
-                gameBoard[x][y] = new Cell(set,sudoku[tracker],x,y);
+                gameCells[x][y] = new Cell(region,startingValues[tracker],x,y);
                 tracker++;
                 
-                //Log.d("boardfor","loop: "+x+"; set: "+set);
+                Log.d("boardfor","loop: "+x+","+y+"; region: "+region);
                 if (x == 2 || x == 5){
-                    set++;
+                    region++;
                 }
                 if (x==8){
-                    set = set-2;
+                    region = region-2;
                 }
             }
             if (y == 2 || y == 5){
-                set=set+3;
+                region = region +3;
             }
         }
-        createOverlayOfSets(0,0,3,6);
-        Log.d("board","Finished GAME BOARD SINGLETON");
+        createOverlayOfRegions(0,0,3,6);
+        Log.d("board","Finished creating GAME BOARD");
 
     }
 
     //region Solving Algorithms
-    public void constraintSolve(){
+
+    public static void solve() {
+        constraintSolve();
+        backtrackingSolve(GameBoard.findBestCell());
+    }
+
+    public static void constraintSolve(){
         boolean simpleSolveWorking = true;
         int loopcounter = 0;
         while (simpleSolveWorking){
             checkRow();
             checkColumn();
-            checkSets();
+            checkRegions();
             simpleSolveWorking = isSolved();
             loopcounter++;
-            //THIS NEEDS SORTING WTF PREVIOUS ME!
             if (simpleSolveWorking == false){
-                Log.d("Not Solved ","Exiting");
+                Log.d("Not Solved ","Needs Backtracking");
             }
         }
         Log.d("solved in:",loopcounter+" EXITING SOLVE");
     }
 
 
-    public boolean backtrackingSolve(Cell cell){
-                //For each possible values of the cell
+    public static boolean backtrackingSolve(Cell cell){
+        //For each possible values of the cell
         for (Integer possvalue : cell.getPossValues()){
             //if validated successfully
             if(validValue(possvalue,cell) == true) {
@@ -117,47 +118,47 @@ public class GameBoard {
     }
     //endregion Solving Algorithms
 
-    private boolean validValue(Integer possvalue, Cell cell) {
+    private static boolean validValue(Integer possvalue, Cell cell) {
         boolean isValid = true;
         if(!checkColumnCells(cell.getY(),possvalue) || !checkRowCells(cell.getX(),possvalue) ||
-                !checkSetCells(cell.getX(), cell.getY(), possvalue)){
+                !checkRegionCells(cell.getX(), cell.getY(), possvalue)){
             isValid = false;
         }
         return isValid;
     }
 
     //Finds the cell with the fewest possible values
-    public Cell findBestCell(){
-        Log.d("Finding Cell"," Start");
+    public static Cell findBestCell(){
+        //Log.d("Finding Cell"," Start");
         Cell bestOption = null;
         //Loop over the entire board
         for (int row = 0; row < gridSize ; row++) {
             for (int column = 0; column < gridSize; column++) {
-                int numValues = gameBoard[row][column].getPossValues().size();
+                int numValues = gameCells[row][column].getPossValues().size();
                 //Only check celsl we don't have an answer for
-                if (gameBoard[row][column].getAnswerValue() == 0){
+                if (gameCells[row][column].getAnswerValue() == 0){
                     //This will be the first cell without an answer we find
                     if (bestOption == null){
-                        bestOption = gameBoard[row][column];
+                        bestOption = gameCells[row][column];
                     }
                     //Check best so far with the current cell
                     if (numValues < bestOption.getPossValues().size()) {
-                        bestOption = gameBoard[row][column];
+                        bestOption = gameCells[row][column];
                     }
                 }
             }
         }
         if (bestOption != null) {
-            Log.d("Finding Cell", "cell x:" + bestOption.getX() + " y:" + bestOption.getY());
+            Log.d("Finding Cell", " x:" + bestOption.getX() + " y:" + bestOption.getY()+ " size:" + bestOption.getPossValues().size());
         }
         return bestOption;
     }
 
     //Check every cell as an assigned answer value
-    private boolean isComplete(){
+    private static boolean isComplete(){
         for (int row = 0; row < gridSize ; row++) {
             for (int column = 0; column < gridSize; column++) {
-                if (gameBoard[row][column].getAnswerValue() == 0){
+                if (gameCells[row][column].getAnswerValue() == 0){
                     return false;
                 }
             }
@@ -165,30 +166,30 @@ public class GameBoard {
         return true;
     }
 
-    private boolean checkColumnCells(int y, int value ) {
+    private static boolean checkColumnCells(int y, int value) {
         for (int row = 0; row < gridSize ; row++) {
-            if (gameBoard[row][y].getAnswerValue() == value){
+            if (gameCells[row][y].getAnswerValue() == value){
                 return false;
             }
         }
         return true;
     }
 
-    private boolean checkRowCells(int x, int value) {
+    private static boolean checkRowCells(int x, int value) {
         for (int column = 0; column < gridSize; column++){
-            if (gameBoard[x][column].getAnswerValue() == value){
+            if (gameCells[x][column].getAnswerValue() == value){
                 return false;
             }
         }
         return true;
     }
 
-    private boolean checkSetCells(int x, int y, int value) {
+    private static boolean checkRegionCells(int x, int y, int value) {
         //optimize so stops after finding 9 cells
         for (int row = 0; row < gridSize ; row++) {
             for (int column = 0; column < gridSize; column++){
-                if (gameBoard[row][column].getRegion() == gameBoard[x][y].getRegion()){
-                    if (gameBoard[row][column].getAnswerValue() == value){
+                if (gameCells[row][column].getRegion() == gameCells[x][y].getRegion()){
+                    if (gameCells[row][column].getAnswerValue() == value){
                         return false;
                     }
                 }
@@ -198,7 +199,7 @@ public class GameBoard {
     }
 
 
-    private void checkColumn() {
+    private static void checkColumn() {
         Log.d("column","checkColumn");
         ArrayList<Integer> excludedValues = new ArrayList<>();
         for (int column = 0; column < gridSize ; column++) {
@@ -207,14 +208,14 @@ public class GameBoard {
                 excludedValues.add(updateExcludedValues(counter,column));
             }
             for (int counter = 0; counter < gridSize; counter++) {
-                if (gameBoard[counter][column].getStartValue() == 0) {
-                    gameBoard[counter][column].updatePossValues(excludedValues);
+                if (gameCells[counter][column].getStartValue() == 0) {
+                    gameCells[counter][column].updatePossValues(excludedValues);
                 }
             }
         }
     }
 
-    private void checkRow() {
+    private static void checkRow() {
         Log.d("row","checkRow");
         ArrayList<Integer> excludedValues = new ArrayList<>();
         for (int row = 0; row < gridSize ; row++) {
@@ -223,54 +224,54 @@ public class GameBoard {
                 excludedValues.add(updateExcludedValues(row,counter));
             }
             for (int counter = 0; counter < gridSize; counter++) {
-                if (gameBoard[row][counter].getStartValue() == 0) {
-                    gameBoard[row][counter].updatePossValues(excludedValues);
+                if (gameCells[row][counter].getStartValue() == 0) {
+                    gameCells[row][counter].updatePossValues(excludedValues);
                 }
             }
         }
     }
 
-    private void checkSets() {
-        Log.d("set","checkSets");
+    private static void checkRegions() {
+        Log.d("set","checkRegions");
         ArrayList<Integer> excludedValues = new ArrayList<>();
-        for (int setCounter = 0; setCounter < gridSize ; setCounter++){
+        for (int regionCounter = 0; regionCounter < gridSize ; regionCounter++){
             for (int pntCounter = 0; pntCounter < gridSize ; pntCounter++){
-                int x = OverlayOfSets[setCounter][pntCounter].getX();
-                int y = OverlayOfSets[setCounter][pntCounter].getY();
+                int x = OverlayOfRegions[regionCounter][pntCounter].getX();
+                int y = OverlayOfRegions[regionCounter][pntCounter].getY();
                 excludedValues.add(updateExcludedValues(x,y));
             }
             for (int pntCounter = 0; pntCounter < gridSize ; pntCounter++){
-                int x = OverlayOfSets[setCounter][pntCounter].getX();
-                int y = OverlayOfSets[setCounter][pntCounter].getY();
-                if (gameBoard[x][y].getStartValue() == 0){
-                    gameBoard[x][y].updatePossValues(excludedValues);
+                int x = OverlayOfRegions[regionCounter][pntCounter].getX();
+                int y = OverlayOfRegions[regionCounter][pntCounter].getY();
+                if (gameCells[x][y].getStartValue() == 0){
+                    gameCells[x][y].updatePossValues(excludedValues);
                 }
             }
             excludedValues.clear();
         }
     }
 
-    private int updateExcludedValues(int row, int column){
-        if (gameBoard[row][column].getAnswerValue() != 0) {
-            return gameBoard[row][column].getAnswerValue();
+    private static int updateExcludedValues(int row, int column){
+        if (gameCells[row][column].getAnswerValue() != 0) {
+            return gameCells[row][column].getAnswerValue();
         }
         return 0;
     }
 
     //This Method requires so that we dont have to loop over all cells to find one set
     //using the TopLeft point of each set recursively check that set then move on
-    private void createOverlayOfSets(int startX, int startY, int add, int max) {
+    private void createOverlayOfRegions(int startX, int startY, int add, int max) {
         int pointInSetNum = 0;
         for(int y = startY; y <= (max+startY); y = y + add) {
             for (int x = startX; x <= (max+startX); x = x + add) {
                 //Check this specific set
                 if(add != 3){
-                    OverlayOfSets[setTracker][pointInSetNum] = new Points(x,y);
-                    gameBoard[x][y].setRegion(setTracker);
+                    OverlayOfRegions[setTracker][pointInSetNum] = new Points(x,y);
+                    gameCells[x][y].setRegion(setTracker);
                     pointInSetNum++;
                 //Move on to next set
                 }else{
-                    createOverlayOfSets(x,y,1,2);
+                    createOverlayOfRegions(x,y,1,2);
                     setTracker++;
                 }
             }
@@ -278,23 +279,43 @@ public class GameBoard {
 
     }
 
-    private boolean isSolved() {
+    private static boolean isSolved() {
         //check the arraylist of each cell and update
         boolean changeMade = false;
         for(int y=0; y<gridSize; y++){
             for(int x=0; x<gridSize; x++) {
-                if( gameBoard[x][y].getPossValues().size() > 1){
+                if( gameCells[x][y].getPossValues().size() > 1){
                     Log.d("isSolved","Arraylist still has >1 values");
 
-                }else if ( gameBoard[x][y].getPossValues().size() == 1){
+                }else if ( gameCells[x][y].getPossValues().size() == 1){
                     //Set the Answer value to the remaining value in the arraylist
 
-                    gameBoard[x][y].setAnswerValue(gameBoard[x][y].getPossValues().remove(0));
-                    //gameBoard[x][y].setAnswerValue(gameBoard[x][y].getPossValues().get(0));
+                    gameCells[x][y].setAnswerValue(gameCells[x][y].getPossValues().remove(0));
+                    //gameCells[x][y].setAnswerValue(gameCells[x][y].getPossValues().get(0));
                     changeMade = true;
                 }
             }
         }
         return changeMade;
+    }
+
+    public void consolesPrint() {
+        System.out.println("----------------------");
+        for(int y=0; y<gridSize; y++){
+            System.out.print("|");
+            for(int x=0; x<gridSize; x++) {
+                System.out.print(gameCells[x][y].getAnswerValue() + " ");
+                if (x==2|| x==5||x==8){
+                    System.out.print("|");
+                }
+            }
+            if (y==2|| y==5||y==8){
+                System.out.println("");
+                System.out.println("----------------------");
+            }else{
+                System.out.println("");
+            }
+
+        }
     }
 }

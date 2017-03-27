@@ -32,6 +32,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_sudoku);
         gridLayout = (GridLayout)findViewById(R.id.sudokuGrid);
+
     }
 
     @Override
@@ -54,7 +55,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
 
         for(int yPos=0; yPos<numOfRow; yPos++){
             for(int xPos=0; xPos<numOfCol; xPos++){
-                int gridValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
+                int gridValue = GameBoard.getCell(xPos,yPos).getStartValue();
 
                 EditText cellText = new EditText(this);
                 cellText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(1)});
@@ -110,7 +111,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
                 int x = cellRef.getX();
                 int y = cellRef.getY();
                 //update gameboard cell with uservalue
-                GameBoard.getInstance().getCell(x, y).setUserAssignedValue(cellValue);
+                GameBoard.getCell(x, y).setUserAssignedValue(cellValue);
             }else{
                 //Error toast and reset to ""
                 Toast.makeText(getApplicationContext(),"Please use numbers between 1-9" ,
@@ -159,10 +160,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
     }
 
     public void SolveSudoku(View view) {
-        GameBoard.getInstance().constraintSolve();
-        GameBoard.getInstance().backtrackingSolve(GameBoard.getInstance().findBestCell());
-
-
+        GameBoard.solve();
         displaySolution();
     }
 
@@ -171,8 +169,8 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
             Points cellRef= cellLookUpTable.get(count);
             int x = cellRef.getX();
             int y = cellRef.getY();
-            int answerValue = GameBoard.getInstance().getCell(x, y).getAnswerValue();
-            int userValue = GameBoard.getInstance().getCell(x, y).getUserAssignedValue();
+            int answerValue = GameBoard.getCell(x, y).getAnswerValue();
+            int userValue = GameBoard.getCell(x, y).getUserAssignedValue();
             int cellId = getResources().getIdentifier(String.valueOf(count), "id", getPackageName());
             EditText cellText = (EditText)findViewById(cellId);
             //REMOVE LATER
