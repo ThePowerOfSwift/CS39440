@@ -146,6 +146,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
         gridLayout = (GridLayout)findViewById(R.id.sudokuGrid);
         int gridWidth = gridLayout.getWidth();
         int gridHeight = gridLayout.getHeight();
+        //Find which is the shortest and set both to that to ensure it's square
         int newXY = Math.min(gridWidth,gridHeight);
 
         ViewGroup.LayoutParams layoutParams = gridLayout.getLayoutParams();

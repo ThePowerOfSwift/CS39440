@@ -29,4 +29,12 @@
         android:layout_marginTop="31dp"
         android:id="@+id/progressBar6" />
 
+    <ImageView
+        android:id="@+id/capturedImage"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:scaleType="fitXY" />
+
 </LinearLayout>

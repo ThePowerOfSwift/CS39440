@@ -38,15 +38,16 @@ public class GameBoard {
             }
             if (y == 2 || y == 5){set = set+3;}
         }
-        createOverlayOfSets(0,0,3,6);
+        //createOverlayOfSets(0,0,3,6);
     }
 
     public void solve() {
-        constraintSolve();
+        //constraintSolve();
         backtrackingSolve(findBestCell());
     }
 
-    public void addVisibleCells(){
+    //Sets what the user will see in the display
+    public void setVisibleCells(){
         int x = 0;
         int y = 1;
         int goalNumVisibleCells;
@@ -54,15 +55,15 @@ public class GameBoard {
         int middle = 4;
         Random random = new Random();
 
-        //Create a random Number between 26 - 34
-        double randNumCells = random.nextInt(8)+26;
+        //Create a random Number between 30 - 36
+        double randNumCells = random.nextInt(8)+30;
         //Round it to a even num
         randNumCells = Math.round(randNumCells/2)*2;
         System.out.println(randNumCells);
         goalNumVisibleCells = (int) randNumCells;
         Boolean firstloop = true;
         while(numVisibleCells <= goalNumVisibleCells ) {
-            //if start value of either is !0 set other to visable and numVisableCells++
+            //if start value of either cell is !0 set other to visible and numVisibleCells++
             if (firstloop) {
                 if (gameCells[middle - x][middle - y].getStartValue() != 0 ||
                         gameCells[middle + x][middle + y].getStartValue() != 0) {
@@ -99,29 +100,6 @@ public class GameBoard {
         }
     }
 
-    private void constraintSolve(){
-        boolean simpleSolveWorking = true;
-        int loopcounter = 0;
-        while (simpleSolveWorking){
-            checkRow();
-            checkColumn();
-            checkRegions();
-            simpleSolveWorking = isSolved();
-            loopcounter++;
-            if (simpleSolveWorking == false){
-                Log.d("Not Solved ","Needs Backtracking");
-            }
-        }
-        Log.d("solved in:",loopcounter+" EXITING SOLVE");
-    }
-
-    private int updateExcludedValues(int row, int column){
-        if (gameCells[row][column].getAnswerValue() != 0) {
-            return gameCells[row][column].getAnswerValue();
-        }
-        return 0;
-    }
-
     private boolean backtrackingSolve(Cell cell){
         //For each possible values of the cell
         if (isComplete()){
@@ -150,7 +128,7 @@ public class GameBoard {
         return false;
     }
 
-
+    //Check that this Value has not conflicts in - Row / Column / Region
     private boolean validValue(Integer possvalue, Cell cell) {
         boolean isValid = true;
         if(!checkColumnCells(cell.getY(),possvalue) || !checkRowCells(cell.getX(),possvalue) ||
@@ -235,6 +213,29 @@ public class GameBoard {
 
 
 
+/*
+    private void constraintSolve(){
+        boolean simpleSolveWorking = true;
+        int loopcounter = 0;
+        while (simpleSolveWorking){
+            checkRow();
+            checkColumn();
+            checkRegions();
+            simpleSolveWorking = isSolved();
+            loopcounter++;
+            if (simpleSolveWorking == false){
+                Log.d("Not Solved ","Needs Backtracking");
+            }
+        }
+        Log.d("solved in:",loopcounter+" EXITING SOLVE");
+    }
+
+    private int updateExcludedValues(int row, int column){
+        if (gameCells[row][column].getAnswerValue() != 0) {
+            return gameCells[row][column].getAnswerValue();
+        }
+        return 0;
+    }
 
     private void checkColumn() {
         Log.d("column","checkColumn");
@@ -311,6 +312,8 @@ public class GameBoard {
         }
     }
 
+
+
     private boolean isSolved() {
         //check the arraylist of each cell and update
         boolean changeMade = false;
@@ -329,7 +332,7 @@ public class GameBoard {
         }
         return changeMade;
     }
-
+*/
     public Cell getCell(int x, int y){
         return gameCells[x][y];
     }

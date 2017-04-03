@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
+
+import org.opencv.android.OpenCVLoader;
 
 
 /**
@@ -18,8 +21,12 @@ public class MainMenuActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main_menu);
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), not working.");
+        } else {
+            Log.d(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), working.");
+        }
     }
 
     /*
@@ -40,6 +47,7 @@ public class MainMenuActivity extends Activity {
         if(resultCode == RESULT_OK) {
             Intent loadingIntent = new Intent(this, LoadingActivity.class);
             loadingIntent.putExtra("fromImage",true);
+            //http://stackoverflow.com/questions/8035008/how-to-pass-image-captured-by-camera-to-next-screen-in-android
             //Bundle extras = data.getExtras();
             //Bitmap imageBitmap = (Bitmap) extras.get("data");
             //mImageView.setImageBitmap(imageBitmap);
