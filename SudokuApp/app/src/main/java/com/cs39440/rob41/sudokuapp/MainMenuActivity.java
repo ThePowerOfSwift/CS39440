@@ -74,6 +74,4 @@ public class MainMenuActivity extends Activity {
             this.finishAffinity();
         }
     }
-
-
 }

@@ -2,10 +2,14 @@ package com.cs39440.rob41.sudokuapp;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.ImageView;
+
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -13,9 +17,11 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.photo.Photo;
 import org.opencv.utils.Converters;
 
 import java.io.IOException;
@@ -29,12 +35,19 @@ import static org.opencv.core.Core.bitwise_not;
 
 public class LoadingActivity extends Activity {
     private final int gridSize = 9;
+    private TessOCR tessOCR;
+    private AssetManager assetManager;
+    private TessBaseAPI tess = new TessBaseAPI();
+    //  /storage/emulated/0/assets/
+    final String datapath = Environment.getExternalStorageDirectory().toString()+"/assets/";
+    //Environment.getRootDirectory().getPath()+"/assets/";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loading);
-        Log.d("test1","LOADINGACTIVITY");
+        Log.d("test1","LOADINGACTIVITY: "+datapath);
         //Retrive the additional data added to the intent
         Intent passedIntent = getIntent();
         boolean fromImage = passedIntent.getBooleanExtra("fromImage",false);
@@ -94,8 +107,10 @@ public class LoadingActivity extends Activity {
         Log.d("createFromImage ","Started");
         //get image
         Mat sudokuOriginal = null;
+        assetManager = getAssets();
+
         try {
-            sudokuOriginal = Utils.loadResource(this, R.drawable.test3);
+            sudokuOriginal = Utils.loadResource(this, R.drawable.test4);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -103,25 +118,80 @@ public class LoadingActivity extends Activity {
             Log.d("Read: ", "Failed reading image");
         }
 
+        Imgproc.resize(sudokuOriginal,sudokuOriginal,new Size(1024,1024));
         Mat sudokuAltered = preprocessImage(sudokuOriginal);
 
-        /*
+        /**/
         //CALL THIS IF > 4 POINTS
         //Dilate the image so white areas are more defined
         Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size (5, 5));
-        Imgproc.dilate(sudoku, sudoku,dilate_kernal);
-        */
+        Imgproc.dilate(sudokuAltered, sudokuAltered,dilate_kernal);
+
         Point[] cornersUnordered = findCornerPnts(sudokuAltered);
         //Useful for debugging
-        sudokuOriginal = drawOuline(sudokuOriginal, cornersUnordered);
+        //sudokuOriginal = drawOuline(sudokuOriginal, cornersUnordered);
         Point[] cornersOrdered = orderCornerPnts(cornersUnordered);
-
         int croppedWidth = getCropImageWidth(cornersOrdered);
         int croppedHeight = getCropImageHeight(cornersOrdered);
 
         Mat outputMat = new Mat(croppedWidth, croppedHeight, CvType.CV_8UC1);
+        Mat perspectiveTransform = getTransformation(croppedWidth,croppedHeight,cornersOrdered);
+        Imgproc.warpPerspective(sudokuAltered, outputMat, perspectiveTransform, new Size(croppedWidth, croppedHeight));
+        outputMat = drawCells(outputMat,croppedWidth, croppedHeight);
+/*
+        tess.setDebug(true);
+        tess.setVariable("digits","123456789");
+        tess.init(datapath,"eng");
+*/
+        bitwise_not(outputMat,outputMat);
+        //Imgproc.resize(outputMat,outputMat,new Size(512,512));
+        tessOCR = new TessOCR(LoadingActivity.this);
 
+        int cellWidth = croppedWidth/9;
+        int cellHeight = croppedHeight/9;
+        int xPos = 0;
+        int yPos = 0;
+        Log.d("Cell width: ",+cellWidth+" height: "+cellHeight);
+        Mat croppedCell;
+        Bitmap croppedCellbm = Bitmap.createBitmap(cellWidth, cellHeight, Bitmap.Config.ARGB_8888);
+        for (int y = 0; y < 9; y++){
+            for(int x = 0; x < 9; x++){
+                //Select the size and position which makes up a cell
+                Rect cellPos = new Rect(xPos,yPos,cellWidth,cellHeight);
+                //Find that point on the de-skewed image
+                croppedCell = new Mat(outputMat,cellPos);
+                //Convert to BitMap
+                Utils.matToBitmap(croppedCell, croppedCellbm);
+                String cellText = tessOCR.getOCRResult(croppedCellbm);
+                Log.d("Cellxy:",+x+","+y+" -"+cellText+"-");
+                xPos = xPos + cellWidth;
+            }
+            yPos = yPos + cellHeight;
+            xPos = 0;
+        }
+        tess.end();
 
+        //Convert to bitmap
+        Bitmap output = Bitmap.createBitmap(croppedWidth, croppedHeight, Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(outputMat, output);
+        String cellText = tessOCR.getOCRResult(output);
+        Log.d("Complete text:",cellText);
+        //Imgproc.drawContours(sudoku2, contourList, tracker, new Scalar(255, 0, 0));
+
+        //Find image display
+        ImageView img = (ImageView) findViewById(R.id.capturedImage);
+        img.setImageBitmap(output);
+        Log.d("createFromImage ","Finished Successfully");
+    }
+/*
+    private String getOCRResults(Bitmap croppedCellbm) {
+        String cellValue;
+        tess.setImage(croppedCellbm);
+        cellValue = tess.getUTF8Text();
+        return cellValue;
+    }
+*/
+    private Mat getTransformation(int croppedWidth, int croppedHeight, Point[] cornersOrdered) {
         List<Point> source = new ArrayList<>();
         source.add(cornersOrdered[0]);
         source.add(cornersOrdered[1]);
@@ -136,31 +206,24 @@ public class LoadingActivity extends Activity {
         dest.add(new Point(croppedWidth, croppedHeight));
         Mat dest2f = Converters.vector_Point2f_to_Mat(dest);
 
-        Mat perspectiveTransform = Imgproc.getPerspectiveTransform(source2f, dest2f);
-        Imgproc.warpPerspective(sudokuOriginal, outputMat, perspectiveTransform, new Size(croppedWidth, croppedHeight));
-
-        outputMat = drawCells(outputMat,croppedWidth, croppedHeight);
-
-
-        //Convert to bitmap
-        Bitmap output = Bitmap.createBitmap(croppedWidth, croppedHeight, Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(outputMat, output);
-
-        //Imgproc.drawContours(sudoku2, contourList, tracker, new Scalar(255, 0, 0));
-
-        //Find image display
-        ImageView img= (ImageView) findViewById(R.id.capturedImage);
-        img.setImageBitmap(output);
-        Log.d("createFromImage ","Finished Successfully");
+        Mat transformation = Imgproc.getPerspectiveTransform(source2f, dest2f);
+        return transformation;
     }
 
     private Mat drawCells(Mat outputMat, int croppedWidth, int croppedHeight) {
         int cellWidth = croppedWidth/9;
         int cellHeight = croppedHeight/9;
-        for (int y = 0; y < croppedHeight; y = y + cellHeight){
-            for(int x = 0; x < croppedWidth; x = x + cellWidth){
-                Imgproc.rectangle(outputMat,new Point(x, y),new Point(x+cellWidth, y+cellHeight),new Scalar(105, 255, 180),2);
+        int yPos = 0;
+        int xPos = 0;
+        int count = 0, count2 = 0;
+        for (int y = 0; y < 9; y++){
+            for(int x = 0; x < 9; x++){
+                Imgproc.rectangle(outputMat,new Point(xPos, yPos),
+                        new Point(xPos+cellWidth, yPos+cellHeight),new Scalar(105, 255, 180),1);
+                xPos = xPos + cellWidth;
             }
+            yPos = yPos + cellHeight;
+            xPos = 0;
         }
         return outputMat;
     }
@@ -227,12 +290,12 @@ public class LoadingActivity extends Activity {
         Mat sudokuAltered = sudokuOriginal.clone();
         //Set to grey scale
         Imgproc.cvtColor(sudokuOriginal, sudokuAltered, Imgproc.COLOR_RGB2GRAY);
-        //Imgproc.medianBlur(sudoku,sudoku,5);
+
 
         //Blur to reduce noise and so easier  identify lines / numbers
-        Imgproc.GaussianBlur(sudokuAltered, sudokuAltered, new Size (5, 5), 0);
+        //Imgproc.GaussianBlur(sudokuAltered, sudokuAltered, new Size (5, 5), 0);
         //Further reduce noise with Adaptive gaussian(vs mean) and deals with varying illumination
-        Imgproc.adaptiveThreshold(sudokuAltered, sudokuAltered, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 19, 2);
+        Imgproc.adaptiveThreshold(sudokuAltered, sudokuAltered, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 25, 8);
         //Invert the colours
         bitwise_not(sudokuAltered, sudokuAltered);
         return sudokuAltered;
@@ -281,14 +344,14 @@ public class LoadingActivity extends Activity {
         Log.d("topLeft x: ",orderedList[0].x+" y: "+orderedList[0].y);
         Log.d("topRight x: ",orderedList[1].x+" y: "+orderedList[1].y);
         Log.d("botRight x: ",orderedList[2].x+" y: "+orderedList[2].y);
-        Log.d("botLeft x: ",orderedList[3].x+" y: "+orderedList[3].y);      
+        Log.d("botLeft x: ",orderedList[3].x+" y: "+orderedList[3].y);
         */
 
         return orderedList;
     }
 
-
     private double sumPoint(Point point){
         return point.x+point.y;
     }
+
 }
