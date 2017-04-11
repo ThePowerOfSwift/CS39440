@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.res.ResourcesCompat;
-import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.util.Log;
@@ -21,7 +20,7 @@ import android.widget.Toast;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreateSudokuActivity extends Activity implements View.OnFocusChangeListener {
+public class PlaySudokuActivity extends Activity implements View.OnFocusChangeListener {
     GridLayout gridLayout;
     boolean drawNums = true;
     int [][] gameData = new int [9][9];
@@ -91,7 +90,6 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
                 // ...so when clicked on it's highlighted
                 cellText.setOnFocusChangeListener(this);
                 // ...so when datas entered it's valided and passed to the gameboard
-
                 cellText.setOnClickListener(cellValueChanged);
 
                 cellLookUpTable.put(count,new Points(xPos,yPos));
@@ -132,7 +130,7 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
         if (hasFocus) {
-            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellshapeinner,null));
+            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedgrey,null));
         }
         if (oldFocus != null){
             oldFocus.setBackgroundColor(Color.TRANSPARENT);
@@ -160,13 +158,9 @@ public class CreateSudokuActivity extends Activity implements View.OnFocusChange
         finish();
     }
 
-    public void SolveSudoku(View view) {
+    public void solveSudoku(View view) {
         GameBoard.getInstance().solve();
         displaySolution();
-        //Colour to Green
-        //cellText.setTextColor(Color.parseColor("#105e07"));
-        //Colour to Red
-        //cellText.setTextColor(Color.parseColor("#8c1500"));
     }
 
     public void displaySolution(){

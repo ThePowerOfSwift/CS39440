@@ -3,7 +3,6 @@ package com.cs39440.rob41.sudokuapp;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -71,7 +70,7 @@ public class ActivitiesInstrumentedTest {
     public void createSudokuTab(){
         //Setup a monitor to check activity has started
         Instrumentation.ActivityMonitor activityMonitor = getInstrumentation().addMonitor(
-                CreateSudokuActivity.class.getName(), null, false);
+                PlaySudokuActivity.class.getName(), null, false);
 
         //Click the Create Sudoku button
         onView(withId(R.id.createSudoku_button)).perform(click());

@@ -2,53 +2,50 @@ package com.cs39440.rob41.sudokuapp;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Environment;
+import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.ImageView;
-
-import com.googlecode.tesseract.android.TessBaseAPI;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.opencv.android.Utils;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.photo.Photo;
-import org.opencv.utils.Converters;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import static org.opencv.core.Core.bitwise_not;
 
 
-public class LoadingActivity extends Activity {
+public class LoadingActivity extends Activity implements View.OnFocusChangeListener {
     private final int gridSize = 9;
-    private TessOCR tessOCR;
-    private AssetManager assetManager;
-    private TessBaseAPI tess = new TessBaseAPI();
-    //  /storage/emulated/0/assets/
-    final String datapath = Environment.getExternalStorageDirectory().toString()+"/assets/";
-    //Environment.getRootDirectory().getPath()+"/assets/";
-
+    GridLayout gridLayout;
+    Bitmap croppedSudoku;
+    Map<Integer, Points> cellLookUpTable = new HashMap<Integer, Points>();
+    View oldFocus = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loading);
-        Log.d("test1","LOADINGACTIVITY: "+datapath);
-        //Retrive the additional data added to the intent
+
+        Log.d("Loading Activity ","Started");
+        //Retrive the additional data added to the intent (defaulted set to false)
         Intent passedIntent = getIntent();
         boolean fromImage = passedIntent.getBooleanExtra("fromImage",false);
 
@@ -58,16 +55,10 @@ public class LoadingActivity extends Activity {
         }else{
             Log.d("fromImage:",String.valueOf(fromImage));
             createFromAlgorithm();
+            Intent intent = new Intent(this, PlaySudokuActivity.class);
+            startActivity (intent);
+            finish();
         }
-        /*
-        GameBoard.getInstance().consolesPrint();
-
-        Intent intent = new Intent(this, CreateSudokuActivity.class);
-        intent.putExtra("fromImage",true);
-        startActivity (intent);
-        Log.d("test2","LOADINGACTIVITY - - - - CLOSING");
-        finish();
-        */
     }
 
     private void createFromAlgorithm() {
@@ -104,254 +95,232 @@ public class LoadingActivity extends Activity {
     }
 
     private void createFromImage() {
+
         Log.d("createFromImage ","Started");
         //get image
         Mat sudokuOriginal = null;
-        assetManager = getAssets();
-
         try {
-            sudokuOriginal = Utils.loadResource(this, R.drawable.test4);
+            sudokuOriginal = Utils.loadResource(this, R.drawable.test2);
         } catch (IOException e) {
             e.printStackTrace();
         }
         if (sudokuOriginal.empty()){
             Log.d("Read: ", "Failed reading image");
         }
-
-        Imgproc.resize(sudokuOriginal,sudokuOriginal,new Size(1024,1024));
-        Mat sudokuAltered = preprocessImage(sudokuOriginal);
-
-        /**/
-        //CALL THIS IF > 4 POINTS
-        //Dilate the image so white areas are more defined
-        Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size (5, 5));
-        Imgproc.dilate(sudokuAltered, sudokuAltered,dilate_kernal);
-
-        Point[] cornersUnordered = findCornerPnts(sudokuAltered);
-        //Useful for debugging
-        //sudokuOriginal = drawOuline(sudokuOriginal, cornersUnordered);
-        Point[] cornersOrdered = orderCornerPnts(cornersUnordered);
-        int croppedWidth = getCropImageWidth(cornersOrdered);
-        int croppedHeight = getCropImageHeight(cornersOrdered);
-
-        Mat outputMat = new Mat(croppedWidth, croppedHeight, CvType.CV_8UC1);
-        Mat perspectiveTransform = getTransformation(croppedWidth,croppedHeight,cornersOrdered);
-        Imgproc.warpPerspective(sudokuAltered, outputMat, perspectiveTransform, new Size(croppedWidth, croppedHeight));
-        outputMat = drawCells(outputMat,croppedWidth, croppedHeight);
-/*
-        tess.setDebug(true);
-        tess.setVariable("digits","123456789");
-        tess.init(datapath,"eng");
-*/
-        bitwise_not(outputMat,outputMat);
-        //Imgproc.resize(outputMat,outputMat,new Size(512,512));
-        tessOCR = new TessOCR(LoadingActivity.this);
-
-        int cellWidth = croppedWidth/9;
-        int cellHeight = croppedHeight/9;
-        int xPos = 0;
-        int yPos = 0;
-        Log.d("Cell width: ",+cellWidth+" height: "+cellHeight);
-        Mat croppedCell;
-        Bitmap croppedCellbm = Bitmap.createBitmap(cellWidth, cellHeight, Bitmap.Config.ARGB_8888);
-        for (int y = 0; y < 9; y++){
-            for(int x = 0; x < 9; x++){
-                //Select the size and position which makes up a cell
-                Rect cellPos = new Rect(xPos,yPos,cellWidth,cellHeight);
-                //Find that point on the de-skewed image
-                croppedCell = new Mat(outputMat,cellPos);
-                //Convert to BitMap
-                Utils.matToBitmap(croppedCell, croppedCellbm);
-                String cellText = tessOCR.getOCRResult(croppedCellbm);
-                Log.d("Cellxy:",+x+","+y+" -"+cellText+"-");
-                xPos = xPos + cellWidth;
-            }
-            yPos = yPos + cellHeight;
-            xPos = 0;
-        }
-        tess.end();
-
-        //Convert to bitmap
-        Bitmap output = Bitmap.createBitmap(croppedWidth, croppedHeight, Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(outputMat, output);
-        String cellText = tessOCR.getOCRResult(output);
-        Log.d("Complete text:",cellText);
-        //Imgproc.drawContours(sudoku2, contourList, tracker, new Scalar(255, 0, 0));
-
-        //Find image display
-        ImageView img = (ImageView) findViewById(R.id.capturedImage);
-        img.setImageBitmap(output);
-        Log.d("createFromImage ","Finished Successfully");
-    }
-/*
-    private String getOCRResults(Bitmap croppedCellbm) {
-        String cellValue;
-        tess.setImage(croppedCellbm);
-        cellValue = tess.getUTF8Text();
-        return cellValue;
-    }
-*/
-    private Mat getTransformation(int croppedWidth, int croppedHeight, Point[] cornersOrdered) {
-        List<Point> source = new ArrayList<>();
-        source.add(cornersOrdered[0]);
-        source.add(cornersOrdered[1]);
-        source.add(cornersOrdered[3]);
-        source.add(cornersOrdered[2]);
-        Mat source2f = Converters.vector_Point2f_to_Mat(source);
-
-        List<Point> dest = new ArrayList<>();
-        dest.add(new Point(0, 0));
-        dest.add(new Point(croppedWidth, 0));
-        dest.add(new Point(0, croppedHeight));
-        dest.add(new Point(croppedWidth, croppedHeight));
-        Mat dest2f = Converters.vector_Point2f_to_Mat(dest);
-
-        Mat transformation = Imgproc.getPerspectiveTransform(source2f, dest2f);
-        return transformation;
-    }
-
-    private Mat drawCells(Mat outputMat, int croppedWidth, int croppedHeight) {
-        int cellWidth = croppedWidth/9;
-        int cellHeight = croppedHeight/9;
-        int yPos = 0;
-        int xPos = 0;
-        int count = 0, count2 = 0;
-        for (int y = 0; y < 9; y++){
-            for(int x = 0; x < 9; x++){
-                Imgproc.rectangle(outputMat,new Point(xPos, yPos),
-                        new Point(xPos+cellWidth, yPos+cellHeight),new Scalar(105, 255, 180),1);
-                xPos = xPos + cellWidth;
-            }
-            yPos = yPos + cellHeight;
-            xPos = 0;
-        }
-        return outputMat;
-    }
-
-    private int getCropImageHeight(Point[] cornersOrdered) {
-        int resultHeight = (int)(cornersOrdered[3].y - cornersOrdered[0].y);
-        int bottomHeight = (int)(cornersOrdered[2].y - cornersOrdered[1].y);
-        //Take the larger of the two
-        if(bottomHeight > resultHeight)
-            resultHeight = bottomHeight;
-        return resultHeight;
-    }
-
-    private int getCropImageWidth(Point[] cornersOrdered) {
-        int resultWidth = (int)(cornersOrdered[1].x - cornersOrdered[0].x);
-        int bottomWidth = (int)(cornersOrdered[2].x - cornersOrdered[3].x);
-        //Take the larger of the two
-        if(bottomWidth > resultWidth)
-            resultWidth = bottomWidth;
-        return resultWidth;
-    }
-
-    private Mat drawOuline(Mat sudokuOriginal, Point[] cornersUnordered) {
-        for(int counter = 0; counter < cornersUnordered.length; counter++ ){
-            Log.d("for ","x: "+cornersUnordered[counter].x+" y: "+cornersUnordered[counter].y);
-            if (counter >= 1){
-                Imgproc.line(sudokuOriginal,cornersUnordered[counter-1],cornersUnordered[counter],new Scalar(255, 105, 180),4);
-            }
-        }
-        Imgproc.line(sudokuOriginal,cornersUnordered[0],cornersUnordered[cornersUnordered.length-1],new Scalar(255, 105, 180),4);
-        return sudokuOriginal;
-    }
-
-    private Point[] findCornerPnts(Mat sudokuAltered) {
-        double area=0;
-        double largestArea = 0;
-        List<MatOfPoint> contourList = new ArrayList<>();
-        Imgproc.findContours(sudokuAltered, contourList, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        //Log.d("createContourList ",String.valueOf(contourList.size()));
-        MatOfPoint2f approx = null;
-
-        for(int counter = 0; counter < contourList.size(); counter++ ){
-            area = Imgproc.contourArea(contourList.get(counter));
-            //filters out the smallest areas
-            if(area>200){
-                MatOfPoint2f sudokuPosCorners = new MatOfPoint2f(contourList.get(counter).toArray());
-                MatOfPoint2f approxCurve = new MatOfPoint2f();
-                double perimeter = 0.02*Imgproc.arcLength(sudokuPosCorners,true);
-                Imgproc.approxPolyDP(sudokuPosCorners,approxCurve,perimeter,true);
-                //Log.d("for ","approx: "+String.valueOf(approxCurve.size())+" area:"+String.valueOf(area));
-                if (area > largestArea  ){//&& 4 == approxCurve
-                    largestArea = area;
-                    approx = approxCurve;
-                    //Log.d("NEW ","LARGEST: "+String.valueOf(largestArea));
+        final ImageClassifier classifier = new ImageClassifier(sudokuOriginal, gridSize,LoadingActivity.this );
+        croppedSudoku = classifier.getCroppedImage();
+        //ImageView img = (ImageView) findViewById(R.id.capturedImage);
+        //img.setImageBitmap(croppedSudoku);
+        LinearLayout layout = (LinearLayout)findViewById(R.id.templateHolder);
+        layout.post(new Runnable() {
+            @Override
+            public void run() {
+                if (classifier.getCornersUnordered().length == 4){
+                    createExampleGrid();
                 }
             }
-        }
-
-        Point[] list = approx.toArray();
-        return list;
+        });
     }
 
-    private Mat preprocessImage(Mat sudokuOriginal) {
-        Mat sudokuAltered = sudokuOriginal.clone();
-        //Set to grey scale
-        Imgproc.cvtColor(sudokuOriginal, sudokuAltered, Imgproc.COLOR_RGB2GRAY);
+    public void createExampleGrid(){
+        gridLayout = (GridLayout)findViewById(R.id.templateGrid);
 
+        int gridSize = updateDisplay();
+        Log.d("gridSize",String.valueOf(gridSize));
+        int numOfCol = gridLayout.getColumnCount();
+        int numOfRow = gridLayout.getRowCount();
+        int cellSize = gridSize/9;
+        int count = 0;
+        for(int yPos=0; yPos<numOfRow; yPos++){
+            for(int xPos=0; xPos<numOfCol; xPos++){
+                int gridValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
+                EditText cellText = new EditText(this);
+                cellText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(1)});
+                cellText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                //Disable the cursor and PointIcon as causes issues
+                cellText.setCursorVisible(false);
+                cellText.setLongClickable(false);
+                //Required for the text to center correctly
+                cellText.setPadding(0,0,0,0);
+                //Set the ID
+                cellText.setId(count);
+                //Formatting of the text
+                cellText.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
+                cellText.setTypeface(null, Typeface.BOLD);
+                cellText.setGravity(Gravity.CENTER);
+                //Formatting of the cell
+                cellText.setBackgroundColor(Color.TRANSPARENT);
+                cellText.setWidth(cellSize);
+                cellText.setHeight(cellSize);
+                if (gridValue != 0) {
+                    cellText.setText(String.valueOf(gridValue));
+                }else{
+                    cellText.setText(String.valueOf(""));
+                }
+                cellText.setTextColor(Color.parseColor("#111111"));
 
-        //Blur to reduce noise and so easier  identify lines / numbers
-        //Imgproc.GaussianBlur(sudokuAltered, sudokuAltered, new Size (5, 5), 0);
-        //Further reduce noise with Adaptive gaussian(vs mean) and deals with varying illumination
-        Imgproc.adaptiveThreshold(sudokuAltered, sudokuAltered, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 25, 8);
-        //Invert the colours
-        bitwise_not(sudokuAltered, sudokuAltered);
-        return sudokuAltered;
+                //Add Listeners..
+                // ...so when clicked on it's highlighted
+                cellText.setOnFocusChangeListener(this);
+                // ...so when datas entered it's valided and passed to the gameboard
+                cellText.setOnClickListener(cellValueChanged);
+
+                cellLookUpTable.put(count,new Points(xPos,yPos));
+                gridLayout.addView(cellText);
+                count++;
+            }
+        }
+        markNonSymmetrical();
+        validateGrid();
     }
 
-    private Point[] orderCornerPnts(Point[] list) {
-        Point[] orderedList = new Point[4];
-
-        Log.d("Size  of ARRAY ",String.valueOf(list.length));
-        //Smallest
-        orderedList[0] = new Point (list[0].x,list[0].y);
-        //Largest
-        orderedList[2] = new Point (list[0].x,list[0].y);
-
-        //Find the Top right (smallest total Val) and Bottom left (largest total Val)
-        for(int counter = 1; counter < list.length; counter++ ){
-            if(sumPoint(list[counter]) > sumPoint(orderedList[2])){
-                orderedList[2] = list[counter];
-            }
-            if(sumPoint(list[counter]) < sumPoint(orderedList[0])){
-                orderedList[0] = list[counter];
-            }
-        }
-
-        Point[] remainingPtnList = new Point[2];
-        int pos = 0;
-        for(int counter = 0; counter < list.length; counter++ ){
-            //If it's not the smallest of the Largest
-            if(!list[counter].equals(orderedList[0]) && !list[counter].equals(orderedList[2])){
-                remainingPtnList[pos] = list[counter];
-                pos++;
-                //Log.d("pos: ",String.valueOf(pos));
+    private boolean validateGrid(){
+        int numOfCol = gridLayout.getColumnCount();
+        int numOfRow = gridLayout.getRowCount();
+        int count = 0;
+        boolean valid = true;
+        for(int yPos=0; yPos<numOfRow; yPos++) {
+            for (int xPos = 0; xPos < numOfCol; xPos++) {
+                EditText cellText = (EditText)findViewById(count);
+                String cellString = cellText.getText().toString();
+                if (!cellString.equals("")) {
+                    int currentValue = Integer.parseInt(cellString);
+                    Points cellRef = cellLookUpTable.get(count);
+                    int x = cellRef.getX();
+                    int y = cellRef.getY();
+                    if (!GameBoard.getInstance().validValue(currentValue, GameBoard.getInstance().getCell(x, y))) {
+                        //Set Text red
+                        cellText.setTextColor(Color.parseColor("#8c1500"));
+                        valid = false;
+                    }else{
+                        cellText.setTextColor(Color.parseColor("#111111"));
+                    }
+                }
+                count++;
             }
         }
-        //The one with the higher x Val will be the Top Right
-        if (remainingPtnList[0].x > remainingPtnList[1].x ){
-            orderedList[1] = remainingPtnList[0];
-            orderedList[3] = remainingPtnList[1];
+        return valid;
+    }
+
+    private void markNonSymmetrical(){
+        int x = 0;
+        int y = 1;
+        int middle = 4;
+        boolean complete = false;
+        //Until we reach the end of the grid
+        while (!complete){
+            EditText cellText = (EditText)findViewById(coordToInt((middle - x),(middle - y)));
+            EditText cellText2 = (EditText)findViewById(coordToInt((middle + x),(middle + y)));
+            if (cellText.getText().length()!=cellText2.getText().length()) {
+                cellText.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedred,null));
+                cellText2.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedred,null));
+            }else{
+                cellText.setBackgroundColor(Color.TRANSPARENT);
+                cellText2.setBackgroundColor(Color.TRANSPARENT);
+            }
+            y++;
+            if(y == 5){
+                y = -4;
+                x++;
+            }
+            if (x == 5){
+                complete = true;
+            }
+        }
+    }
+
+    private int coordToInt(int x, int y){
+        return (x*9)+y;
+    }
+
+    //On load Resize the photo and grid to best fit the Screen
+    public int updateDisplay(){
+        LinearLayout layout = (LinearLayout)findViewById(R.id.templateHolder);
+        LinearLayout btnLayout = (LinearLayout)findViewById(R.id.templateButtonHolder);
+        gridLayout = (GridLayout)findViewById(R.id.templateGrid);
+        //Display the cropped Photo
+        ImageView img = (ImageView) findViewById(R.id.capturedImage);
+        img.setImageBitmap(croppedSudoku);
+
+        int gridWidth = layout.getWidth();
+        int gridHeight = layout.getHeight()/2 - btnLayout.getHeight();
+
+        //Find which is the shortest and set both to that to ensure it's square
+        int newXY = Math.min(gridWidth,gridHeight);
+
+        ViewGroup.LayoutParams layoutParams = gridLayout.getLayoutParams();
+        layoutParams.height = newXY;
+        layoutParams.width = newXY;
+        gridLayout.setLayoutParams(layoutParams);
+
+        ViewGroup.LayoutParams imglayoutParams = img.getLayoutParams();
+        imglayoutParams.height = newXY;
+        imglayoutParams.width = newXY;
+        img.setLayoutParams(imglayoutParams);
+
+        return newXY;
+    }
+
+    public void closeActivity(View view) {
+        finish();
+    }
+
+    private void validateInput(View editTextCell){
+        EditText cellText = (EditText) editTextCell;
+        //using ID lookup the XY coordinates;
+        Points cellRef= cellLookUpTable.get(cellText.getId());
+        int x = cellRef.getX();
+        int y = cellRef.getY();
+        if (!cellText.getText().toString().isEmpty()){
+            int cellValue = Integer.parseInt(cellText.getText().toString());
+            if(cellValue >= 1 && cellValue <=9){
+                //update gameboard cell with uservalue
+                GameBoard.getInstance().getCell(x, y).setStartValue(cellValue);
+                GameBoard.getInstance().getCell(x, y).setAnswerValue(cellValue);
+            }else{
+                //Error toast and reset to ""
+                Toast.makeText(getApplicationContext(),"Please use numbers between 1-9" ,
+                            Toast.LENGTH_SHORT).show();
+                cellText.setText("");
+            }
         }else{
-            orderedList[1] = remainingPtnList[1];
-            orderedList[3] = remainingPtnList[0];
+            GameBoard.getInstance().getCell(x, y).setStartValue(0);
+            GameBoard.getInstance().getCell(x, y).setAnswerValue(0);
         }
-        /*
-        Returns in the order: -
-        Top Left, Top Right, Bottom Right, Bottom Left
-        Log.d("topLeft x: ",orderedList[0].x+" y: "+orderedList[0].y);
-        Log.d("topRight x: ",orderedList[1].x+" y: "+orderedList[1].y);
-        Log.d("botRight x: ",orderedList[2].x+" y: "+orderedList[2].y);
-        Log.d("botLeft x: ",orderedList[3].x+" y: "+orderedList[3].y);
-        */
-
-        return orderedList;
     }
 
-    private double sumPoint(Point point){
-        return point.x+point.y;
+    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        Log.d("FOCUS CHANGE ","CALLED");
+        validateGrid();
+        markNonSymmetrical();
+        if (hasFocus) {
+            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedgrey,null));
+        }
+        if (oldFocus != null){
+            validateInput(oldFocus);
+        }
+        oldFocus = v;
     }
 
+    private View.OnClickListener cellValueChanged = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Log.d("OnClick ","CALLED");
+            validateInput(v);
+        }
+    };
+
+    public void createSudoku(View view) {
+        //Check the grid has no conflicts
+        if(validateGrid()){
+            GameBoard.getInstance().solve();
+            Intent intent = new Intent(this, PlaySudokuActivity.class);
+            startActivity (intent);
+            finish();
+        }else{
+            Toast.makeText(getApplicationContext(),"Please ensure the Sudoku is Valid, Errors will be in Red" ,
+                    Toast.LENGTH_LONG).show();
+        }
+    }
 }

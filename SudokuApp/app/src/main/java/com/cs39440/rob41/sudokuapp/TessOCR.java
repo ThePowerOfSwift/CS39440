@@ -48,13 +48,49 @@ public class TessOCR {
         mTess.stop();
     }
 
-    public String getOCRResult(Bitmap bitmap) {
+    public String getOCRResult(Bitmap bitmap, int cellheight) {
         mTess.setImage(bitmap);
         String result = mTess.getUTF8Text();
+        String charboxes = mTess.getBoxText(0);
         if (result.equals("") || result.equals(" ")  || result==null){
             return "0";
         }
-        return result;
+        if (result.length() == 1 ){
+            return result;
+        }
+        Log.d("Posible Chars", result);
+        return resultsFilter (charboxes, cellheight);
+    }
+
+    private String resultsFilter(String boxText, int cellheight){
+        /*
+        Example input" 2 19 0 57 76 0
+                       1 63 6 71 11 0"
+         1st value is the number identified by OCR
+         2nd and 3rd are the top left coordinates of a box
+         4th and 5th are the bottom right coordinates of a box
+         if (Val 2 + val 3) - (Val 4 + val 5) > 30 then valid
+         */
+        String correctValue = "0";
+        Log.d("boxtext ", boxText);
+        String substrings[] = boxText.split("\\r\\n|\\n|\\r");
+        //For each possible values
+        for (String substring:substrings) {
+            Log.d("substring ", substring);
+            String values[] = substring.split(" ");
+            //check value is a number and not the entire height of the cell
+            int possGridLine = Integer.valueOf(values[1])+Integer.valueOf(values[4]);
+            if(android.text.TextUtils.isDigitsOnly(values[0])
+                    && !((Integer.valueOf(values[4])==cellheight) && ((Integer.valueOf(values[1])<7)))) {
+                //If the character is large enough
+                if ((Integer.valueOf(values[3]) + Integer.valueOf(values[4])) -
+                        (Integer.valueOf(values[1]) + Integer.valueOf(values[2])) > 40) {
+                    Log.d("substring RETURNING", values[0]);
+                    return values[0];
+                }
+            }
+        }
+        return correctValue;
     }
 
     public void onDestroy() {

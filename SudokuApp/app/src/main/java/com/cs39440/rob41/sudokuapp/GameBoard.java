@@ -12,8 +12,6 @@ public class GameBoard {
     private int gridSize = 9;
     private static GameBoard ourInstance = new GameBoard();
     private Cell [][] gameCells = new Cell [gridSize][gridSize];
-    private Points [][] OverlayOfSets = new Points [gridSize][gridSize];
-    private int setTracker = 0;
 
     public static GameBoard getInstance() {
         return ourInstance;
@@ -27,8 +25,8 @@ public class GameBoard {
         int set = 0;
         int tracker = 0;
 
-        for(int y=0; y<gridSize; y++){
-            for(int x=0; x<gridSize; x++){
+        for(int y = 0; y < gridSize; y++){
+            for(int x = 0; x < gridSize; x++){
                 gameCells[x][y] = new Cell(set,cellValues[tracker],x,y);
                 tracker++;
 
@@ -43,6 +41,7 @@ public class GameBoard {
 
     public void solve() {
         //constraintSolve();
+        updatePossibleValues();
         backtrackingSolve(findBestCell());
     }
 
@@ -128,11 +127,28 @@ public class GameBoard {
         return false;
     }
 
+    private void updatePossibleValues(){
+        for(int y = 0; y < gridSize; y++) {
+            for (int x = 0; x < gridSize; x++) {
+                //If we dont know the answer
+                if(gameCells[x][y].getAnswerValue()==0) {
+                    ArrayList<Integer> possvalues = new ArrayList<Integer>();
+                    for (int counter = 1; counter < 10; counter++) {
+                        if (validValue(counter, gameCells[x][y])) {
+                            possvalues.add(counter);
+                        }
+                    }
+                    gameCells[x][y].setPossValues(possvalues);
+                }
+            }
+        }
+    }
+
     //Check that this Value has not conflicts in - Row / Column / Region
-    private boolean validValue(Integer possvalue, Cell cell) {
+    public boolean validValue(Integer possvalue, Cell cell) {
         boolean isValid = true;
-        if(!checkColumnCells(cell.getY(),possvalue) || !checkRowCells(cell.getX(),possvalue) ||
-                !checkRegionCells(cell.getX(), cell.getY(), possvalue)){
+        if(!checkColumnCells(cell, possvalue) || !checkRowCells(cell, possvalue) ||
+                !checkRegionCells(cell, possvalue)){
             isValid = false;
         }
         return isValid;
@@ -146,7 +162,7 @@ public class GameBoard {
         for (int row = 0; row < gridSize ; row++) {
             for (int column = 0; column < gridSize; column++) {
                 int numValues = gameCells[row][column].getPossValues().size();
-                //Only check celsl we don't have an answer for
+                //Only check cells we don't have an answer for
                 if (gameCells[row][column].getAnswerValue() == 0){
                     //This will be the first cell without an answer we find
                     if (bestOption == null){
@@ -179,31 +195,38 @@ public class GameBoard {
         return true;
     }
 
-    private boolean checkColumnCells(int y, int value) {
+    private boolean checkColumnCells(Cell cell, int value) {
         for (int row = 0; row < gridSize ; row++) {
-            if (gameCells[row][y].getAnswerValue() == value){
-                return false;
+            if (row != cell.getX()) {
+                if (gameCells[row][cell.getY()].getAnswerValue() == value) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
-    private boolean checkRowCells(int x, int value) {
+    private boolean checkRowCells(Cell cell, int value) {
         for (int column = 0; column < gridSize; column++){
-            if (gameCells[x][column].getAnswerValue() == value){
-                return false;
+            if (column!= cell.getY()) {
+                if (gameCells[cell.getX()][column].getAnswerValue() == value) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
-    private boolean checkRegionCells(int x, int y, int value) {
+    private boolean checkRegionCells(Cell cell, int value) {
         //optimize so stops after finding 9 cells
         for (int row = 0; row < gridSize ; row++) {
             for (int column = 0; column < gridSize; column++){
-                if (gameCells[row][column].getRegion() == gameCells[x][y].getRegion()){
-                    if (gameCells[row][column].getAnswerValue() == value){
-                        return false;
+                //Check it's not its self
+                if (row != cell.getX() && column!= cell.getY()) {
+                    if (gameCells[row][column].getRegion() == gameCells[cell.getX()][cell.getY()].getRegion()) {
+                        if (gameCells[row][column].getAnswerValue() == value) {
+                            return false;
+                        }
                     }
                 }
             }

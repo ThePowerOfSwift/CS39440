@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Created by Prommy on 06/03/2017.
+ * Created by Rob Bayliss on 06/03/2017.
  */
 
 public class Cell {
@@ -72,7 +72,6 @@ public class Cell {
     public void setStartValToAnsVal(){
         this.startValue = this.answerValue;
     }
-
 
     public int getAnswerValue() {
         return answerValue;

@@ -16,5 +16,7 @@
     <string name="credits">OpenCV?</string>
     <string name="back_label">Back</string>
     <string name="loadingSudoku_label">Creating Sudoku</string>
+    <string name="Play_label">Play</string>
     <string name="solve_label">Solve</string>
+    <string name="Photo_label">Photo of Sudoku</string>
 </resources>
