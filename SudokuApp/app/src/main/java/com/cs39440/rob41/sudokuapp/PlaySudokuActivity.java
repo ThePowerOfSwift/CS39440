@@ -75,6 +75,7 @@ public class PlaySudokuActivity extends Activity implements View.OnFocusChangeLi
                 cellText.setBackgroundColor(Color.TRANSPARENT);
                 cellText.setWidth(cellSize);
                 cellText.setHeight(cellSize);
+                cellText.setSelectAllOnFocus(true);
                 //If it already has a set value make it unchangeable / Different color
                 if (gridValue != 0) {
                     cellText.setText(String.valueOf(gridValue));
@@ -130,7 +131,7 @@ public class PlaySudokuActivity extends Activity implements View.OnFocusChangeLi
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
         if (hasFocus) {
-            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedgrey,null));
+            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellHighlightGrey,null));
         }
         if (oldFocus != null){
             oldFocus.setBackgroundColor(Color.TRANSPARENT);
@@ -159,7 +160,6 @@ public class PlaySudokuActivity extends Activity implements View.OnFocusChangeLi
     }
 
     public void solveSudoku(View view) {
-        GameBoard.getInstance().solve();
         displaySolution();
     }
 

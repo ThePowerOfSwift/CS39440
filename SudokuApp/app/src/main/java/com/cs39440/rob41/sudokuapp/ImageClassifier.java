@@ -24,51 +24,54 @@ import java.util.List;
 import static org.opencv.core.Core.bitwise_not;
 
 /**
- * Created by Rob on 08-Apr-17.
+ * Created by Robert Bayliss on 08-Apr-17.
  */
 
-public class ImageClassifier {
-    private TessOCR tessOCR;
+class ImageClassifier {
     private TessBaseAPI tess = new TessBaseAPI();
-    private int resize = 1026;
-    private int cellPadding = 13;
-    int cellValues [];
+    private int cellValues[];
+    private Point[] cornersUnordered;
+    private Bitmap croppedImage;
 
-    public Point[] getCornersUnordered() {
+    Point[] getCornersUnordered() {
         return cornersUnordered;
     }
 
-    Point[] cornersUnordered;
-    private Bitmap croppedImage;
-
-    public Bitmap getCroppedImage() {
+    Bitmap getCroppedImage() {
         return croppedImage;
     }
 
-    public ImageClassifier(Mat sudokuOriginal, int gridSize, Context context){
-        cellValues = new int [gridSize*gridSize];
+    ImageClassifier(Mat sudokuOriginal, int gridSize, Context context) {
+        int resize = 1026;
+        cellValues = new int[gridSize * gridSize];
         Mat sudokuAltered = preprocessImage(sudokuOriginal);
 
         /*
         Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size (10, 10));
         Imgproc.dilate(sudokuAltered, sudokuAltered,dilate_kernal);
         */
+        //IF RETURNS NULL
         cornersUnordered = findCornerPnts(sudokuAltered);
+        if (cornersUnordered == null) {
+            Log.d("Corners not found", " Returned Null");
+            Utils.matToBitmap(sudokuOriginal, croppedImage);
+            return;
+        }
 
         //IF > 4 points Dilate the image so white areas are more defined
-        if (cornersUnordered.length != 4){
-            Log.d("Corners not found: ",cornersUnordered.length+" Dilating Image");
+        if (cornersUnordered.length != 4) {
+            Log.d("Corners not found", cornersUnordered.length + " Dilating Image");
             Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
-            Imgproc.dilate(sudokuAltered, sudokuAltered,dilate_kernal);
+            Imgproc.dilate(sudokuAltered, sudokuAltered, dilate_kernal);
             cornersUnordered = findCornerPnts(sudokuAltered);
             //If we still have not found the corners display error
-            if (cornersUnordered.length != 4) {
-                Log.d("Corners still not found",cornersUnordered.length+" quiting");
-                sudokuAltered= drawSudokuOuline(sudokuAltered,cornersUnordered);
-                croppedImage = Bitmap.createBitmap(sudokuAltered.cols(), sudokuAltered.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(sudokuAltered, croppedImage);
-            }
-        }else {
+        }
+        if (cornersUnordered.length != 4) {
+            Log.d("Corners still not found", cornersUnordered.length + " quiting");
+            sudokuAltered = drawSudokuOuline(sudokuAltered, cornersUnordered);
+            croppedImage = Bitmap.createBitmap(sudokuAltered.cols(), sudokuAltered.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(sudokuAltered, croppedImage);
+        } else {
             //Useful for debugging
             //sudokuOriginal = drawSudokuOuline(sudokuOriginal, cornersUnordered);
             Point[] cornersOrdered = orderCornerPnts(cornersUnordered);
@@ -100,7 +103,8 @@ public class ImageClassifier {
     }
 
     private void callTesseract(Context context, Mat outputMat) {
-        tessOCR = new TessOCR(context);
+        TessOCR tessOCR = new TessOCR(context);
+        int cellPadding = 13;
         int cellWidth = (outputMat.width() / 9) - (cellPadding * 2);
         int cellHeight = (outputMat.height() / 9) - (cellPadding * 2);
         int xPos = cellPadding;
@@ -134,7 +138,7 @@ public class ImageClassifier {
         setGameBoard();
     }
 
-    private void setGameBoard(){
+    private void setGameBoard() {
         GameBoard.getInstance().createCells(cellValues);
         GameBoard.getInstance().consolesPrint();
     }
@@ -159,14 +163,14 @@ public class ImageClassifier {
     }
 
     private Mat drawCells(Mat outputMat) {
-        int cellWidth = outputMat.width()/9;
-        int cellHeight = outputMat.height()/9;
+        int cellWidth = outputMat.width() / 9;
+        int cellHeight = outputMat.height() / 9;
         int yPos = 0;
         int xPos = 0;
-        for (int y = 0; y < 9; y++){
-            for(int x = 0; x < 9; x++){
-                Imgproc.rectangle(outputMat,new Point(xPos, yPos),
-                        new Point(xPos+cellWidth, yPos+cellHeight),new Scalar(105, 255, 180),1);
+        for (int y = 0; y < 9; y++) {
+            for (int x = 0; x < 9; x++) {
+                Imgproc.rectangle(outputMat, new Point(xPos, yPos),
+                        new Point(xPos + cellWidth, yPos + cellHeight), new Scalar(105, 255, 180), 1);
                 xPos = xPos + cellWidth;
             }
             yPos = yPos + cellHeight;
@@ -176,31 +180,31 @@ public class ImageClassifier {
     }
 
     private int getCropImageHeight(Point[] cornersOrdered) {
-        int resultHeight = (int)(cornersOrdered[3].y - cornersOrdered[0].y);
-        int bottomHeight = (int)(cornersOrdered[2].y - cornersOrdered[1].y);
+        int resultHeight = (int) (cornersOrdered[3].y - cornersOrdered[0].y);
+        int bottomHeight = (int) (cornersOrdered[2].y - cornersOrdered[1].y);
         //Take the larger of the two
-        if(bottomHeight > resultHeight)
+        if (bottomHeight > resultHeight)
             resultHeight = bottomHeight;
         return resultHeight;
     }
 
     private int getCropImageWidth(Point[] cornersOrdered) {
-        int resultWidth = (int)(cornersOrdered[1].x - cornersOrdered[0].x);
-        int bottomWidth = (int)(cornersOrdered[2].x - cornersOrdered[3].x);
+        int resultWidth = (int) (cornersOrdered[1].x - cornersOrdered[0].x);
+        int bottomWidth = (int) (cornersOrdered[2].x - cornersOrdered[3].x);
         //Take the larger of the two
-        if(bottomWidth > resultWidth)
+        if (bottomWidth > resultWidth)
             resultWidth = bottomWidth;
         return resultWidth;
     }
 
     private Mat drawSudokuOuline(Mat sudokuOriginal, Point[] cornersUnordered) {
-        for(int counter = 0; counter < cornersUnordered.length; counter++ ){
-            Log.d("for ","x: "+cornersUnordered[counter].x+" y: "+cornersUnordered[counter].y);
-            if (counter >= 1){
-                Imgproc.line(sudokuOriginal,cornersUnordered[counter-1],cornersUnordered[counter],new Scalar(255, 105, 180),4);
+        for (int counter = 0; counter < cornersUnordered.length; counter++) {
+            //Log.d("for ","x: "+cornersUnordered[counter].x+" y: "+cornersUnordered[counter].y);
+            if (counter >= 1) {
+                Imgproc.line(sudokuOriginal, cornersUnordered[counter - 1], cornersUnordered[counter], new Scalar(255, 105, 180), 4);
             }
         }
-        Imgproc.line(sudokuOriginal,cornersUnordered[0],cornersUnordered[cornersUnordered.length-1],new Scalar(255, 105, 180),4);
+        Imgproc.line(sudokuOriginal, cornersUnordered[0], cornersUnordered[cornersUnordered.length - 1], new Scalar(255, 105, 180), 4);
         return sudokuOriginal;
     }
 
@@ -221,68 +225,70 @@ public class ImageClassifier {
     }
 
     private Point[] findCornerPnts(Mat sudokuAltered) {
-        double area=0;
+        double area = 0;
         double largestArea = 0;
         List<MatOfPoint> contourList = new ArrayList<>();
         Imgproc.findContours(sudokuAltered, contourList, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
         //Log.d("createContourList ",String.valueOf(contourList.size()));
         MatOfPoint2f approx = null;
 
-        for(int counter = 0; counter < contourList.size(); counter++ ){
+        for (int counter = 0; counter < contourList.size(); counter++) {
             area = Imgproc.contourArea(contourList.get(counter));
             //filters out the smallest areas
-            if(area>200){
+            if (area > 200) {
                 MatOfPoint2f sudokuPosCorners = new MatOfPoint2f(contourList.get(counter).toArray());
                 MatOfPoint2f approxCurve = new MatOfPoint2f();
-                double perimeter = 0.02*Imgproc.arcLength(sudokuPosCorners,true);
-                Imgproc.approxPolyDP(sudokuPosCorners,approxCurve,perimeter,true);
+                double perimeter = 0.02 * Imgproc.arcLength(sudokuPosCorners, true);
+                Imgproc.approxPolyDP(sudokuPosCorners, approxCurve, perimeter, true);
                 //Log.d("for ","approx: "+String.valueOf(approxCurve.size())+" area:"+String.valueOf(area));
-                if (area > largestArea  ){//&& 4 == approxCurve
+                if (area > largestArea) {//&& 4 == approxCurve
                     largestArea = area;
                     approx = approxCurve;
                     //Log.d("NEW ","LARGEST: "+String.valueOf(largestArea));
                 }
             }
         }
-
-        Point[] list = approx.toArray();
+        Point[] list = null;
+        if (approx != null) {
+            list = approx.toArray();
+        }
         return list;
     }
 
     private Point[] orderCornerPnts(Point[] list) {
         Point[] orderedList = new Point[4];
 
-        Log.d("Size  of ARRAY ",String.valueOf(list.length));
+        Log.d("Size  of ARRAY ", String.valueOf(list.length));
         //Smallest
-        orderedList[0] = new Point (list[0].x,list[0].y);
+        orderedList[0] = new Point(list[0].x, list[0].y);
         //Largest
-        orderedList[2] = new Point (list[0].x,list[0].y);
+        orderedList[2] = new Point(list[0].x, list[0].y);
 
         //Find the Top right (smallest total Val) and Bottom left (largest total Val)
-        for(int counter = 1; counter < list.length; counter++ ){
-            if(sumPoint(list[counter]) > sumPoint(orderedList[2])){
+        for (int counter = 1; counter < list.length; counter++) {
+            if (sumPoint(list[counter]) > sumPoint(orderedList[2])) {
                 orderedList[2] = list[counter];
             }
-            if(sumPoint(list[counter]) < sumPoint(orderedList[0])){
+            if (sumPoint(list[counter]) < sumPoint(orderedList[0])) {
                 orderedList[0] = list[counter];
             }
         }
 
         Point[] remainingPtnList = new Point[2];
         int pos = 0;
-        for(int counter = 0; counter < list.length; counter++ ){
+        for (int counter = 0; counter < list.length; counter++) {
             //If it's not the smallest of the Largest
-            if(!list[counter].equals(orderedList[0]) && !list[counter].equals(orderedList[2])){
+            if (!list[counter].equals(orderedList[0]) && !list[counter].equals(orderedList[2])) {
                 remainingPtnList[pos] = list[counter];
                 pos++;
                 //Log.d("pos: ",String.valueOf(pos));
             }
         }
         //The one with the higher x Val will be the Top Right
-        if (remainingPtnList[0].x > remainingPtnList[1].x ){
+        if (remainingPtnList[0].x > remainingPtnList[1].x) {
             orderedList[1] = remainingPtnList[0];
             orderedList[3] = remainingPtnList[1];
-        }else{
+        } else {
             orderedList[1] = remainingPtnList[1];
             orderedList[3] = remainingPtnList[0];
         }
@@ -298,15 +304,7 @@ public class ImageClassifier {
         return orderedList;
     }
 
-    private double sumPoint(Point point){
-        return point.x+point.y;
+    private double sumPoint(Point point) {
+        return point.x + point.y;
     }
-/*
-    private String getOCRResults(Bitmap croppedCellbm) {
-        String cellValue;
-        tess.setImage(croppedCellbm);
-        cellValue = tess.getUTF8Text();
-        return cellValue;
-    }
-*/
 }

@@ -12,6 +12,7 @@ public class GameBoard {
     private int gridSize = 9;
     private static GameBoard ourInstance = new GameBoard();
     private Cell [][] gameCells = new Cell [gridSize][gridSize];
+    int count = 0;
 
     public static GameBoard getInstance() {
         return ourInstance;
@@ -36,13 +37,19 @@ public class GameBoard {
             }
             if (y == 2 || y == 5){set = set+3;}
         }
-        //createOverlayOfSets(0,0,3,6);
     }
 
     public void solve() {
         //constraintSolve();
-        updatePossibleValues();
+        Log.d("Solving","Started");
+        reducePossValueLists();
+        Log.d("Solving","Backtracking started");
+        long startTime = System.nanoTime();
         backtrackingSolve(findBestCell());
+        long endTime = System.nanoTime();
+        //Gets time in ms
+        long duration = (endTime - startTime)/1000000;
+        Log.d("Solving","Completed in (ms):"+duration);
     }
 
     //Sets what the user will see in the display
@@ -100,45 +107,75 @@ public class GameBoard {
     }
 
     private boolean backtrackingSolve(Cell cell){
-        //For each possible values of the cell
+        //Log.d("Backtracking","On - "+ cell.getX() + "," + cell.getY() + " Poss-" +(cell.getPossValues()));
+        count++;
+        /**/
         if (isComplete()){
-            Log.d("backtracking ","complete");
+            Log.d("Backtracking ","complete");
+            //Log.d("Backtracking ", String.valueOf(count));
             return true;
         }
+        //For each possible values of the cell
         for (Integer possvalue : cell.getPossValues()){
+            //Log.d("Backtracking",cell.getX() + "," + cell.getY() + " Trying: " +possvalue);
+            //consolesPrint();
             //if validated successfully
-            if(validValue(possvalue,cell) == true) {
+            if(validValue(possvalue, cell)) {
                 //assign Value to the answer value of the cell
                 cell.setAnswerValue(possvalue);
                 //Check if this completes the Sudoku
                 if (isComplete()){
-                    Log.d("backtracking ","complete");
+                    Log.d("Backtracking ","complete");
+                    //Log.d("Backtracking ", String.valueOf(count));//373976
+                    //D/Solving: Completed in (ms):326087 my phone
+                    //D/Solving: Completed in (ms):1775 emulator
                     return true;
                 }
+
+                setPossibleValues();
                 //find next cell and recurse, if successful return True
-                if (backtrackingSolve(findBestCell()) == true) {
+                Cell nextCell = findBestCell();
+                if (nextCell == null || nextCell.getPossValues().size() == 0){
+                    cell.setAnswerValue(0);
+                    //Log.d("Backtracking ","BUGGER");
+                }else if (backtrackingSolve(nextCell)) {
                     return true;
                     //Reset answerValue and try next
                 } else {
                     cell.setAnswerValue(0);
                 }
+                setPossibleValues();
             }
         }
         return false;
     }
 
-    private void updatePossibleValues(){
-        for(int y = 0; y < gridSize; y++) {
-            for (int x = 0; x < gridSize; x++) {
-                //If we dont know the answer
-                if(gameCells[x][y].getAnswerValue()==0) {
-                    ArrayList<Integer> possvalues = new ArrayList<Integer>();
-                    for (int counter = 1; counter < 10; counter++) {
-                        if (validValue(counter, gameCells[x][y])) {
-                            possvalues.add(counter);
+    private void setPossibleValues(){
+        boolean exit = false;
+        while(!exit) {
+            exit = true;
+            for (int y = 0; y < gridSize; y++) {
+                for (int x = 0; x < gridSize; x++) {
+                    //If we dont know the answer
+                    if (gameCells[x][y].getAnswerValue() == 0) {
+                        ArrayList<Integer> possvalues = new ArrayList<Integer>();
+                        for (int counter = 1; counter < 10; counter++) {
+                            if (validValue(counter, gameCells[x][y])) {
+                                possvalues.add(counter);
+                            }
                         }
+                        gameCells[x][y].setPossValues(possvalues);
+
+                        /* This has to be disabled as interfered the backtracking algorithium from
+                         rolling back changes
+                        //If there is only one possible vale set it as answer
+                        if (possvalues.size() == 1) {
+                            gameCells[x][y].setAnswerValue(possvalues.get(0));
+                            exit = false;
+                            Log.d("SetValues"," Single value found for"+ x + "," + y + " Poss-" +(possvalues.get(0)));
+                        }
+                        */
                     }
-                    gameCells[x][y].setPossValues(possvalues);
                 }
             }
         }
@@ -197,6 +234,7 @@ public class GameBoard {
 
     private boolean checkColumnCells(Cell cell, int value) {
         for (int row = 0; row < gridSize ; row++) {
+            //So it doesn't compare to itself
             if (row != cell.getX()) {
                 if (gameCells[row][cell.getY()].getAnswerValue() == value) {
                     return false;
@@ -208,6 +246,7 @@ public class GameBoard {
 
     private boolean checkRowCells(Cell cell, int value) {
         for (int column = 0; column < gridSize; column++){
+            //So it doesn't compare to itself
             if (column!= cell.getY()) {
                 if (gameCells[cell.getX()][column].getAnswerValue() == value) {
                     return false;
@@ -218,10 +257,10 @@ public class GameBoard {
     }
 
     private boolean checkRegionCells(Cell cell, int value) {
-        //optimize so stops after finding 9 cells
+        //Could optimize so stops after finding 9 cells
         for (int row = 0; row < gridSize ; row++) {
             for (int column = 0; column < gridSize; column++){
-                //Check it's not its self
+                //So it doesn't compare to itself
                 if (row != cell.getX() && column!= cell.getY()) {
                     if (gameCells[row][column].getRegion() == gameCells[cell.getX()][cell.getY()].getRegion()) {
                         if (gameCells[row][column].getAnswerValue() == value) {
@@ -234,8 +273,117 @@ public class GameBoard {
         return true;
     }
 
+    private boolean checkColumnPossValues(Cell cell) {
+        boolean updated = false;
+        boolean onlyPos = true;
+        //Log.d("CELL ",cell.getX()+","+cell.getY());
+        //for each possible value in the list, loop over row
+        for (Integer possvalue : cell.getPossValues()) {
+            for (int row = 0; row < gridSize; row++) {
+                //if it's not itself and that cell it doesn't have an answer
+                if (row != cell.getX() && gameCells[row][cell.getY()].getAnswerValue() == 0) {
+                    //get possible values can compare to current value
+                    ArrayList<Integer> possvalues2 = gameCells[row][cell.getY()].getPossValues();
+                    if (possvalues2.contains(possvalue)){
+                        //Log.d("setting false", "woop");
+                        onlyPos = false;
+                    }
+                }
+            }
+            //if there are no other places it must be the answer for this cell
+            if (onlyPos && validValue(possvalue,cell) && cell.getAnswerValue() == 0){
+                cell.setAnswerValue(possvalue);
+                //cell.setPossValues(new ArrayList<Integer>());
+                //Log.d("COLUMN SETTING AnsVal",cell.getX()+","+cell.getY()+" to "+possvalue);
+                updated = true;
+            }
+        }
+        return updated;
+    }
 
+    private boolean checkRowPossValues(Cell cell) {
+        boolean onlyPos = true;
+        boolean updated = false;
+        //for each possible value in the list, loop over column
+        for (Integer possvalue : cell.getPossValues()) {
+            for (int column = 0; column < gridSize; column++) {
+                //if it's not itself and that cell it doesn't have an answer
+                if (column != cell.getY() && gameCells[cell.getX()][column].getAnswerValue() == 0) {
+                    //get possible values can compare to current value
+                    ArrayList<Integer> possvalues2 = gameCells[cell.getX()][column].getPossValues();
+                    if (possvalues2.contains(possvalue)){
+                        onlyPos = false;
+                    }
+                }
+            }
+            if (onlyPos && validValue(possvalue,cell)&& cell.getAnswerValue() == 0){
+                cell.setAnswerValue(possvalue);
+                //cell.setPossValues(new ArrayList<Integer>());
+                Log.d("Row Setting AnsVal ",cell.getX()+","+cell.getY()+" to "+possvalue);
+                updated = true;
+            }
+        }
+        return updated;
+    }
 
+    private boolean checkRegionPossValues(Cell cell) {
+        //Could optimize so stops after finding 9 cells
+        boolean updated = false;
+        boolean onlyPos = true;
+        //for each possible value in the list, loop over row
+        for (Integer possvalue : cell.getPossValues()) {
+            for (int row = 0; row < gridSize; row++) {
+                for (int column = 0; column < gridSize; column++) {
+                    //So it doesn't compare to itself
+                    if (gameCells[row][column].getRegion() == cell.getRegion()
+                            && (cell != gameCells[row][column])){
+                        //Log.d("Comparing To",gameCells[row][column].getX()+","+gameCells[row][column].getY());
+                        if (gameCells[row][column].getAnswerValue() == 0) {
+                            //get possible values can compare to current value
+                            ArrayList<Integer> possvalues2 = gameCells[row][column].getPossValues();
+                            //Log.d("Pos", String.valueOf(gameCells[row][column].getPossValues()));
+                            if (possvalues2.contains(possvalue)){
+                                //Log.d("Region cell FOUND-",row+","+column+" possibleVal "+possvalues2);
+                                onlyPos = false;
+                            }else{
+                                //Log.d("Region cell-",row+","+column+" possibleVal "+possvalues2);
+                            }
+                        }
+                    }
+                }
+            }
+            //if there are no other places it must be the answer for this cell
+            if (onlyPos && validValue(possvalue,cell) && cell.getAnswerValue() == 0){
+                cell.setAnswerValue(possvalue);
+                //cell.setPossValues(new ArrayList<Integer>());
+                Log.d("Region Setting AnsVal",cell.getX()+","+cell.getY()+" to "+possvalue);
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    private void reducePossValueLists(){
+        boolean gridUpdated = true;
+        while (gridUpdated) {
+            gridUpdated = false;
+            Log.d("ReduceValues","Set starting Values");
+            setPossibleValues();
+            Log.d("ReduceValues","Reducing Lists");
+            consolesPrint();
+            for (int row = 0; row < gridSize; row++) {
+                for (int column = 0; column < gridSize; column++) {
+                    if (checkColumnPossValues(gameCells[row][column]) ||
+                            checkRowPossValues(gameCells[row][column])||
+                            checkRegionPossValues(gameCells[row][column])) {
+                        Log.d("ReduceValues","gridUpdated");
+                        gridUpdated = true;
+                    }
+                }
+            }
+        }
+
+    }
 /*
     private void constraintSolve(){
         boolean simpleSolveWorking = true;
@@ -335,8 +483,6 @@ public class GameBoard {
         }
     }
 
-
-
     private boolean isSolved() {
         //check the arraylist of each cell and update
         boolean changeMade = false;
@@ -355,7 +501,9 @@ public class GameBoard {
         }
         return changeMade;
     }
+
 */
+
     public Cell getCell(int x, int y){
         return gameCells[x][y];
     }

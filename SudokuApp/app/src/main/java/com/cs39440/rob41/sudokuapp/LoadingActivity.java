@@ -3,6 +3,7 @@ package com.cs39440.rob41.sudokuapp;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -23,7 +24,6 @@ import android.widget.Toast;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +51,8 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
 
         if (fromImage){
             Log.d("fromImage:",String.valueOf(fromImage));
-            createFromImage();
+            String imagePath = passedIntent.getStringExtra("imagePath");
+            createFromImage(imagePath);
         }else{
             Log.d("fromImage:",String.valueOf(fromImage));
             createFromAlgorithm();
@@ -63,16 +64,16 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
 
     private void createFromAlgorithm() {
         //SAMPLE SUDOKU
-        /*int [] sudoku ={
-                8,0,0,5,0,0,3,2,0,
-                7,0,3,1,0,0,4,0,0,
-                1,2,0,0,0,9,0,0,8,
-                6,5,0,0,9,3,0,8,0,
-                0,9,0,0,0,0,0,1,0,
-                0,8,0,6,2,0,0,9,3,
-                2,0,0,4,0,0,0,6,7,
-                0,0,6,0,0,8,1,0,2,
-                0,7,4,0,0,6,0,0,5,0};*/
+        /*int [] cellValues ={
+                0,0,1,0,0,2,0,4,0,
+                3,0,0,5,0,0,6,0,0,
+                0,9,0,0,0,0,0,0,7,
+                9,0,0,0,1,0,0,8,0,
+                0,0,0,2,4,8,0,0,0,
+                0,2,0,0,6,0,0,0,3,
+                4,0,0,0,0,0,0,3,0,
+                0,0,3,0,0,1,0,0,8,
+                0,5,0,7,0,0,9,0,0};*/
 
         int numCells = gridSize*gridSize;
         int cellValues []  = new int [numCells];
@@ -89,37 +90,52 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
                 }
             }
         }
+
         GameBoard.getInstance().createCells(cellValues);
         GameBoard.getInstance().solve();
         GameBoard.getInstance().setVisibleCells();
+        Log.d("CONSOLE PRINT","current");
+        GameBoard.getInstance().consolesPrint();
     }
 
-    private void createFromImage() {
+    private void createFromImage(String imagePath) {
+        Log.d("createFromImage: ","Started, Using img: "+imagePath);
+        Mat sudokuOriginal = new Mat();
 
-        Log.d("createFromImage ","Started");
         //get image
-        Mat sudokuOriginal = null;
+        Bitmap bmImg = BitmapFactory.decodeFile(imagePath);
+        Utils.bitmapToMat(bmImg,sudokuOriginal);
+
+        /* This can be used to load preset test images from the drawable folder.
         try {
             sudokuOriginal = Utils.loadResource(this, R.drawable.test2);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        */
+
         if (sudokuOriginal.empty()){
             Log.d("Read: ", "Failed reading image");
-        }
-        final ImageClassifier classifier = new ImageClassifier(sudokuOriginal, gridSize,LoadingActivity.this );
-        croppedSudoku = classifier.getCroppedImage();
-        //ImageView img = (ImageView) findViewById(R.id.capturedImage);
-        //img.setImageBitmap(croppedSudoku);
-        LinearLayout layout = (LinearLayout)findViewById(R.id.templateHolder);
-        layout.post(new Runnable() {
-            @Override
-            public void run() {
-                if (classifier.getCornersUnordered().length == 4){
-                    createExampleGrid();
-                }
+        }else{
+            final ImageClassifier classifier = new ImageClassifier(sudokuOriginal, gridSize, LoadingActivity.this);
+            croppedSudoku = classifier.getCroppedImage();
+            //ImageView img = (ImageView) findViewById(R.id.capturedImage);
+            //img.setImageBitmap(croppedSudoku);
+            if (classifier.getCornersUnordered().length == 4) {
+                LinearLayout layout = (LinearLayout) findViewById(R.id.templateHolder);
+                layout.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("Runing",String.valueOf(classifier.getCornersUnordered().length));
+                            createExampleGrid();
+                    }
+                });
+            }else{
+                Toast.makeText(getApplicationContext(),"Could not detect Sudoku" ,
+                        Toast.LENGTH_LONG).show();
+                //finish();
             }
-        });
+        }
     }
 
     public void createExampleGrid(){
@@ -152,6 +168,7 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
                 cellText.setBackgroundColor(Color.TRANSPARENT);
                 cellText.setWidth(cellSize);
                 cellText.setHeight(cellSize);
+                cellText.setSelectAllOnFocus(true);
                 if (gridValue != 0) {
                     cellText.setText(String.valueOf(gridValue));
                 }else{
@@ -171,10 +188,10 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
             }
         }
         markNonSymmetrical();
-        validateGrid();
+        validateExampleGrid();
     }
 
-    private boolean validateGrid(){
+    private boolean validateExampleGrid(){
         int numOfCol = gridLayout.getColumnCount();
         int numOfRow = gridLayout.getRowCount();
         int count = 0;
@@ -212,8 +229,8 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
             EditText cellText = (EditText)findViewById(coordToInt((middle - x),(middle - y)));
             EditText cellText2 = (EditText)findViewById(coordToInt((middle + x),(middle + y)));
             if (cellText.getText().length()!=cellText2.getText().length()) {
-                cellText.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedred,null));
-                cellText2.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedred,null));
+                cellText.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellHighlightRed,null));
+                cellText2.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellHighlightRed,null));
             }else{
                 cellText.setBackgroundColor(Color.TRANSPARENT);
                 cellText2.setBackgroundColor(Color.TRANSPARENT);
@@ -261,11 +278,7 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
         return newXY;
     }
 
-    public void closeActivity(View view) {
-        finish();
-    }
-
-    private void validateInput(View editTextCell){
+    private void validateCellInput(View editTextCell){
         EditText cellText = (EditText) editTextCell;
         //using ID lookup the XY coordinates;
         Points cellRef= cellLookUpTable.get(cellText.getId());
@@ -291,14 +304,14 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
 
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
-        Log.d("FOCUS CHANGE ","CALLED");
-        validateGrid();
+        //Log.d("FOCUS CHANGE ","CALLED");
+        validateExampleGrid();
         markNonSymmetrical();
         if (hasFocus) {
-            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellselectedgrey,null));
+            v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellHighlightGrey,null));
         }
         if (oldFocus != null){
-            validateInput(oldFocus);
+            validateCellInput(oldFocus);
         }
         oldFocus = v;
     }
@@ -306,14 +319,15 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
     private View.OnClickListener cellValueChanged = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Log.d("OnClick ","CALLED");
-            validateInput(v);
+            //Log.d("OnClick ","CALLED");
+            validateCellInput(v);
         }
     };
 
+    //This is called when the Play Button is clicked
     public void createSudoku(View view) {
         //Check the grid has no conflicts
-        if(validateGrid()){
+        if(validateExampleGrid()){
             GameBoard.getInstance().solve();
             Intent intent = new Intent(this, PlaySudokuActivity.class);
             startActivity (intent);
@@ -322,5 +336,10 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
             Toast.makeText(getApplicationContext(),"Please ensure the Sudoku is Valid, Errors will be in Red" ,
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    //This is called when the Back Button is clicked
+    public void closeActivity(View view) {
+        finish();
     }
 }

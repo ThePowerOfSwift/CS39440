@@ -78,6 +78,7 @@ public class Cell {
     }
 
     public void setAnswerValue(int answerValue) {
+        possValues = new ArrayList<>();
         this.answerValue = answerValue;
     }
 
