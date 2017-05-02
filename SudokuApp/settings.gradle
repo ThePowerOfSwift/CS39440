@@ -1,2 +1,2 @@
-include ':app', ':tess-two'
+include ':Sudoku App', ':tess-two'
 include ':openCVLibrary320'
