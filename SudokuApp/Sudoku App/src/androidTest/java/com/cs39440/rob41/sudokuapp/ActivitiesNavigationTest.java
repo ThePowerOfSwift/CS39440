@@ -40,12 +40,6 @@ public class ActivitiesNavigationTest {
     }
 
     @Test
-    //Check the menu exists and has the correct buttons
-    public void menuTab(){
-
-    }
-
-    @Test
     //Check the information page displays
     public void informationTabLoads(){
         //Setup a monitor to check activity has started

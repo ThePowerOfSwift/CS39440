@@ -85,7 +85,6 @@ public class MainMenuActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //If the user took a picture direct to OCR element otherwise fall through to main menu
         if(resultCode == RESULT_OK) {
-
             Intent loadingIntent = new Intent(this, LoadingActivity.class);
             loadingIntent.putExtra("fromImage",true);
             loadingIntent.putExtra("imagePath",currentPhotoPath);

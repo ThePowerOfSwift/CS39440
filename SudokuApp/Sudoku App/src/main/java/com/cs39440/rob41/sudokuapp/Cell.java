@@ -8,28 +8,30 @@ import java.util.ArrayList;
 
 public class Cell {
     private final int region;
-    private int startValue;
+    private boolean startValue;
     private int answerValue;
     private int userAssignedValue;
     private final int x;
     private final int y;
     private ArrayList <Integer> possValues = new ArrayList<>();
 
-    public Cell(int passRegion, int passStartValue, int passX, int passY){
+    public Cell(int passRegion, int passAnsValue, int passX, int passY){
         // TODO Auto-generated constructor stub
         region = passRegion;
-        startValue = passStartValue;
+        answerValue = passAnsValue;
         userAssignedValue = 0;
         x = passX;
         y = passY;
         //Populate the inital list with all values
-        if (passStartValue == 0){
+        if (passAnsValue == 0){
             for (int counter = 1; counter < 10; counter++) {
                 possValues.add(counter);
             }
             answerValue = 0;
-        }else if(passStartValue >= 1 && passStartValue <=9 ){
-            answerValue = passStartValue;
+            startValue = false;
+        }else if(passAnsValue >= 1 && passAnsValue <=9 ){
+            answerValue = passAnsValue;
+            startValue = true;
         }
     }
 
@@ -49,7 +51,7 @@ public class Cell {
         return possValues;
     }
 
-    public int getStartValue() {
+    public boolean getStartValue() {
         return startValue;
     }
 
@@ -65,9 +67,8 @@ public class Cell {
         this.possValues = possValues;
     }
 
-    public void setStartValue(int startValue) {
+    public void setStartValue(boolean startValue) {
         this.startValue = startValue;
-        setAnswerValue(startValue);
     }
 
     public void setUserAssignedValue(int userAssignedValue) {
@@ -77,9 +78,5 @@ public class Cell {
     public void setAnswerValue(int answerValue) {
         possValues = new ArrayList<>();
         this.answerValue = answerValue;
-    }
-
-    public void setStartValToAnsVal(){
-        this.startValue = this.answerValue;
     }
 }

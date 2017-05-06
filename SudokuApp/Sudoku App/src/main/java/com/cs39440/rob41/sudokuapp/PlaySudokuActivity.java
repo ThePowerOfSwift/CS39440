@@ -1,6 +1,7 @@
 package com.cs39440.rob41.sudokuapp;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.text.InputType;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View.OnClickListener;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,7 +72,6 @@ public class PlaySudokuActivity extends Activity implements View.OnFocusChangeLi
     private void createGrid(){
         int gridSize = updateGridSize();
         gridLayout = (GridLayout)findViewById(R.id.sudokuGrid);
-        Log.d("gridSize",String.valueOf(gridSize));
         int numOfCol = gridLayout.getColumnCount();
         int numOfRow = gridLayout.getRowCount();
         int cellSize = gridSize/9;
@@ -78,33 +79,21 @@ public class PlaySudokuActivity extends Activity implements View.OnFocusChangeLi
         for(int yPos=0; yPos<numOfRow; yPos++){
             for(int xPos=0; xPos<numOfCol; xPos++){
                 int id = (yPos*9)+xPos;
-                int gridValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
-
-                EditText cellText = new EditText(this);
-                cellText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(1)});
-                cellText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                //Disable the cursor and PointIcon as causes issues
-                cellText.setCursorVisible(false);
-                cellText.setLongClickable(false);
-                //Required for the text to center correctly
-                cellText.setPadding(0,0,0,0);
+                boolean isStartValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
+                LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService
+                        (LAYOUT_INFLATER_SERVICE);
+                EditText cellText = (EditText) inflater.inflate(R.layout.cell_edit_text,null);
                 //Set the ID
                 cellText.setId(id);
-
-                //Formatting of the text
-                cellText.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
-                cellText.setTypeface(null,Typeface.BOLD);
-                cellText.setGravity(Gravity.CENTER);
-                //Formatting of the cell
-                cellText.setBackgroundColor(Color.TRANSPARENT);
+                //Size of the cell
                 cellText.setWidth(cellSize);
                 cellText.setHeight(cellSize);
-                cellText.setSelectAllOnFocus(true);
+                //Limit input to 1
+                cellText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(1)});
                 //If it already has a set value make it unchangeable / Different color
-                if (gridValue != 0) {
-                    cellText.setText(String.valueOf(gridValue));
-                    //Colour to Grey
-                    cellText.setTextColor(Color.parseColor("#111111"));
+                if (isStartValue) {
+                    cellText.setText(String.valueOf
+                            (GameBoard.getInstance().getCell(xPos,yPos).getAnswerValue()));
                     cellText.setFocusable(false);
                 }else{
                     cellText.setText(String.valueOf(""));

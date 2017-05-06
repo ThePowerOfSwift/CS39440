@@ -13,7 +13,9 @@
         \nThis Application was created as part of my Major project for university. As such, it
         needed to demonstrate my ability to develop software and write efficient code, all whist
         following a software development methodology to achieve the stated goal.</string>
-    <string name="credits">OpenCV?</string>
+    <string name="credits">The App makes use of: \n  -OpenCV \n  -Tesseract OCR \n Both of these
+        are available as open-source software and licenced user the OpenCV Licenced and Apache
+        License</string>
     <string name="back_label">Back</string>
     <string name="loadingSudoku_label">Creating Sudoku</string>
     <string name="Play_label">Play</string>

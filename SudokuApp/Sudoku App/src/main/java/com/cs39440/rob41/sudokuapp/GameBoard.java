@@ -51,7 +51,7 @@ public class GameBoard {
         Log.d("Solving","Started");
         constraintSolve();
         consolesPrint();
-        //If not completed using backtracking
+        //If not completed use backtracking
         if (!isComplete()) {
             Log.d("Solving","Backtracking started");
             long startTime = System.nanoTime();
@@ -93,12 +93,12 @@ public class GameBoard {
         goalNumVisibleCells = (int) randNumCells;
         Boolean firstloop = true;
         while(numVisibleCells <= goalNumVisibleCells ) {
-            //if start value of either cell is !0 set other to visible and numVisibleCells++
+            //if start value of either cell is true set other to true and numVisibleCells++
             if (firstloop) {
-                if (gameCells[middle - x][middle - y].getStartValue() != 0 ||
-                        gameCells[middle + x][middle + y].getStartValue() != 0) {
-                    gameCells[middle - x][middle - y].setStartValToAnsVal();
-                    gameCells[middle + x][middle + y].setStartValToAnsVal();
+                if (gameCells[middle - x][middle - y].getStartValue() ||
+                        gameCells[middle + x][middle + y].getStartValue()) {
+                    gameCells[middle - x][middle - y].setStartValue(true);
+                    gameCells[middle + x][middle + y].setStartValue(true);
                     //System.out.println("New cells (1) @x"+(middle - x)+",y"+(middle - y)+" AND @x"+(middle + x)+",y"+(middle + y));
                     numVisibleCells++;
                 }
@@ -108,8 +108,8 @@ public class GameBoard {
                 randNumCells = random.nextInt(10);
                 if (randNumCells == 0){
                     //System.out.println("New cells (2) @x"+(middle - x)+",y"+(middle - y)+" AND @x"+(middle + x)+",y"+(middle + y));
-                    gameCells[middle - x][middle - y].setStartValToAnsVal();
-                    gameCells[middle + x][middle + y].setStartValToAnsVal();
+                    gameCells[middle - x][middle - y].setStartValue(true);;
+                    gameCells[middle + x][middle + y].setStartValue(true);
                     numVisibleCells = numVisibleCells+2;
                 }
             }
@@ -134,12 +134,6 @@ public class GameBoard {
     private boolean backtrackingSolve(Cell cell){
         //Log.d("Backtracking","On - "+ cell.getX() + "," + cell.getY() + " Poss-" +(cell.getPossValues()));
         count++;
-        /**/
-        if (isComplete()){
-            Log.d("Backtracking ","complete");
-            Log.d("Backtracking ", "Num Inspected cells: "+String.valueOf(count));
-            return true;
-        }
         //For each possible values of the cell
         for (Integer possvalue : cell.getPossValues()){
             //Log.d("Backtracking",cell.getX() + "," + cell.getY() + " Trying: " +possvalue);
@@ -158,11 +152,12 @@ public class GameBoard {
                 }
 
                 setPossibleValues();
-                //find next cell and recurse, if successful return True
+                //find next cell and recurse, if it has possible values
                 Cell nextCell = findCellWithFewestPossVals();
+                //Next cell has no values go back to previous cell
                 if (nextCell == null || nextCell.getPossValues().size() == 0){
                     cell.setAnswerValue(0);
-                    //Log.d("Backtracking ","BUGGER");
+                    return false;
                 }else if (backtrackingSolve(nextCell)) {
                     return true;
                     //Reset answerValue and try next

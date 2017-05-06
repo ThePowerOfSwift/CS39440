@@ -17,6 +17,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.opencv.core.Core.bitwise_not;
@@ -31,7 +32,12 @@ class ImageClassifier {
     private Point[] cornersOrdered;
     private Bitmap processedImg;
 
-    ImageClassifier(Mat sudokuOriginal, int gridSize, Context context) {
+    ImageClassifier(Bitmap sudokuOriginalbm, int gridSize, Context context) {
+        Mat sudokuOriginal = new Mat();
+        if(sudokuOriginalbm.getHeight()+sudokuOriginalbm.getWidth()<1500){
+            sudokuOriginalbm = Bitmap.createScaledBitmap(sudokuOriginalbm, 1024, 1024, false);
+        }
+        Utils.bitmapToMat(sudokuOriginalbm,sudokuOriginal);
         int resize = 1026;
         cellValues = new int[gridSize * gridSize];
         Mat sudokuAltered = preprocessImage(sudokuOriginal);
@@ -52,16 +58,16 @@ class ImageClassifier {
         //IF > 4 points Dilate the image so white areas are more defined
         if (cornersUnordered.length != 4) {
             Log.d("Corners not found", cornersUnordered.length + " Dilating Image");
-            Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+            Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(10, 10));
             Imgproc.dilate(sudokuAltered, sudokuAltered, dilate_kernal);
             setCornersUnordered(sudokuAltered);
             //If we still have not found the corners display error
         }
         if (cornersUnordered.length != 4) {
             Log.d("Corners still not found", cornersUnordered.length + " quiting");
-            sudokuAltered = drawSudokuOutline(sudokuAltered, cornersUnordered);
-            processedImg = Bitmap.createBitmap(sudokuAltered.cols(), sudokuAltered.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(sudokuAltered, processedImg);
+            sudokuOriginal = drawSudokuOutline(sudokuOriginal, cornersUnordered);
+            processedImg = Bitmap.createBitmap(sudokuOriginal.cols(), sudokuOriginal.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(sudokuOriginal, processedImg);
         } else {
             //Useful for debugging
             //sudokuOriginal = drawSudokuOutline(sudokuOriginal, cornersUnordered);
@@ -118,6 +124,9 @@ class ImageClassifier {
                 Rect cellPos = new Rect(xPos, yPos, cellWidth, cellHeight);
                 //Find that point on the de-skewed image
                 croppedCell = new Mat(ocrMat, cellPos);
+                //dialte the cell
+                //Mat dilate_kernal = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2));
+                //Imgproc.dilate(croppedCell, croppedCell, dilate_kernal);
                 //Convert to BitMap
                 Utils.matToBitmap(croppedCell, croppedCellbm);
                 String cellText = tessOCR.getOCRResult(croppedCellbm, cellHeight);
@@ -132,9 +141,6 @@ class ImageClassifier {
             yPos = yPos + cellHeight + cellPadding * 2;
             xPos = cellPadding;
         }
-        //Create a gameboard with the suspected values from the OCR
-        GameBoard.getInstance().createCells(cellValues);
-        GameBoard.getInstance().consolesPrint();
     }
 
     //Transform the image so that it's a unskewed square
@@ -216,6 +222,8 @@ class ImageClassifier {
         //Blur to reduce noise and so easier  identify lines / numbers
         //Imgproc.GaussianBlur(sudokuAltered, sudokuAltered, new Size (5, 5), 0);
         //Further reduce noise with Adaptive gaussian(vs mean) and deals with varying illumination
+        //Imgproc.GaussianBlur(sudokuAltered, sudokuAltered, new Size (5, 5), 2);
+        //Imgproc.threshold(sudokuAltered, sudokuAltered, 255, Imgproc.THRESH_BINARY+Imgproc.THRESH_OTSU, 5);
         Imgproc.adaptiveThreshold(sudokuAltered, sudokuAltered, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 25, 11);
 
         //Invert the colours
@@ -302,6 +310,11 @@ class ImageClassifier {
         Log.d("botLeft x: ",orderedList[3].x+" y: "+orderedList[3].y);
         */
         cornersOrdered = orderedList;
+    }
+
+    public int[] getCellValues() {
+        Log.d("Cell values", Arrays.toString(cellValues));
+        return cellValues;
     }
 
     private double sumPoint(Point point) {

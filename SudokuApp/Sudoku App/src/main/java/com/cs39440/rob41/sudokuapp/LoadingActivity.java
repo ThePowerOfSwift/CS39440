@@ -5,14 +5,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputFilter;
-import android.text.InputType;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
@@ -21,8 +18,7 @@ import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,28 +90,23 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
 
     private void createFromImage(String imagePath) {
         Log.d("createFromImage: ","Started, Using img: "+imagePath);
-        Mat sudokuOriginal = new Mat();
+        //Mat sudokuOriginal = new Mat();
 
         //Fetch the image from the path
-        Bitmap bmImg = BitmapFactory.decodeFile(imagePath);
-        Utils.bitmapToMat(bmImg,sudokuOriginal);
+        //Bitmap bmImg = BitmapFactory.decodeFile(imagePath);
+        Bitmap bmImg = BitmapFactory.decodeResource(getResources(),R.drawable.test1);
 
-        /* This can be used to load preset test images from the drawable folder.
-        try {
-            sudokuOriginal = Utils.loadResource(this, R.drawable.test2);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
-
-        if (sudokuOriginal.empty()){
+        if (bmImg == null) {
             Log.d("CreateFromImage ", "Failed reading image");
         }else{
-            final ImageClassifier classifier = new ImageClassifier(sudokuOriginal, gridSize, LoadingActivity.this);
+            final ImageClassifier classifier = new ImageClassifier(bmImg, gridSize, LoadingActivity.this);
             croppedSudoku = classifier.getProcessedImg();
             //ImageView img = (ImageView) findViewById(R.id.capturedImage);
             //img.setImageBitmap(croppedSudoku);
             if (classifier.getCornersUnordered()!= null && classifier.getCornersUnordered().length == 4) {
+
+                GameBoard.getInstance().createCells(classifier.getCellValues());
+
                 LinearLayout layout = (LinearLayout) findViewById(R.id.templateHolder);
                 layout.post(new Runnable() {
                     @Override
@@ -136,8 +127,8 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
                         }else{
                             Log.d("CreateFromImage", String.valueOf(classifier.getCornersUnordered().length)+" Corners found");
                         }
-                        createExampleGrid();
-                        //updateDisplay();
+                        //createExampleGrid();
+                        updateDisplay();
                     }
                 });
                 //finish();
@@ -157,29 +148,20 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
         for(int yPos=0; yPos<numOfRow; yPos++){
             for(int xPos=0; xPos<numOfCol; xPos++){
                 int id = (yPos*9)+xPos;
-                int gridValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
-                EditText cellText = new EditText(this);
-                cellText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(1)});
-                cellText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                //Disable the cursor and PointIcon as causes issues
-                cellText.setCursorVisible(false);
-                cellText.setLongClickable(false);
-                //Required for the text to center correctly
-                cellText.setPadding(0,0,0,0);
+                boolean isStartValue = GameBoard.getInstance().getCell(xPos,yPos).getStartValue();
+                LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService
+                        (LAYOUT_INFLATER_SERVICE);
+                EditText cellText = (EditText) inflater.inflate(R.layout.cell_edit_text,null);
                 //Set the ID
-                //Log.d("count",String.valueOf(id)+" X+Y: "+yPos+xPos);
                 cellText.setId(id);
-                //Formatting of the text
-                cellText.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
-                cellText.setTypeface(null, Typeface.BOLD);
-                cellText.setGravity(Gravity.CENTER);
-                //Formatting of the cell
-                cellText.setBackgroundColor(Color.TRANSPARENT);
+                //Size of the cell
                 cellText.setWidth(cellSize);
                 cellText.setHeight(cellSize);
-                cellText.setSelectAllOnFocus(true);
-                if (gridValue != 0) {
-                    cellText.setText(String.valueOf(gridValue));
+                //Limit input to 1
+                cellText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(1)});
+                if (isStartValue) {
+                    cellText.setText(String.valueOf
+                            (GameBoard.getInstance().getCell(xPos,yPos).getAnswerValue()));
                 }else{
                     cellText.setText(String.valueOf(""));
                 }
@@ -267,9 +249,9 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
         LinearLayout layout = (LinearLayout)findViewById(R.id.templateHolder);
         LinearLayout btnLayout = (LinearLayout)findViewById(R.id.templateButtonHolder);
         gridLayout = (GridLayout)findViewById(R.id.templateGrid);
-        //Display the cropped Photo
+        //Display the cropped Photo and ensure the size is 1024x1024
         ImageView img = (ImageView) findViewById(R.id.capturedImage);
-        img.setImageBitmap(croppedSudoku);
+        img.setImageBitmap(Bitmap.createScaledBitmap(croppedSudoku, 1024, 1024, false));
 
         int gridWidth = layout.getWidth();
         int gridHeight = layout.getHeight()/2 - btnLayout.getHeight();
@@ -300,7 +282,8 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
             int cellValue = Integer.parseInt(cellText.getText().toString());
             if(cellValue >= 1 && cellValue <=9){
                 //update gameboard cell with uservalue
-                GameBoard.getInstance().getCell(x, y).setStartValue(cellValue);
+                GameBoard.getInstance().getCell(x, y).setStartValue(true);
+                GameBoard.getInstance().getCell(x, y).setAnswerValue(cellValue);
             }else{
                 //Error toast and reset to ""
                 Toast.makeText(getApplicationContext(),"Please use numbers between 1-9" ,
@@ -308,7 +291,8 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
                 cellText.setText("");
             }
         }else{
-            GameBoard.getInstance().getCell(x, y).setStartValue(0);
+            GameBoard.getInstance().getCell(x, y).setStartValue(false);
+            GameBoard.getInstance().getCell(x, y).setAnswerValue(0);
         }
     }
 
@@ -322,6 +306,7 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
             v.setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.cellhighlightgrey,null));
         }
         if (oldFocus != null){
+            oldFocus.setBackground(null);
             validateCellInput(oldFocus);
         }
         oldFocus = v;
@@ -330,7 +315,6 @@ public class LoadingActivity extends Activity implements View.OnFocusChangeListe
     private OnClickListener cellValueChanged = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            //Log.d("OnClick ","CALLED");
             validateCellInput(v);
         }
     };

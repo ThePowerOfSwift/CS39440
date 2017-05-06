@@ -59,6 +59,7 @@ public class CameraActivityTest {
         }*/
 
         //set file to the bitmap
-        //call activity result for camera (will req activity result
+        //call activity result for camera will req intent data
+        //pass the path of the created bitmap
     }
 }
